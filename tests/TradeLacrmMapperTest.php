@@ -133,4 +133,25 @@ final class TradeLacrmMapperTest extends TestCase
         $this->assertSame(['contact_name' => 'Sam Lee'], TradeLacrmMapper::changes(['IsCompany' => false, 'Name' => 'Sam Lee']));
         $this->assertSame([], TradeLacrmMapper::changes(['Name' => 'No flag']));
     }
+
+    public function test_a_company_with_no_email_or_phone_takes_them_from_its_first_linked_person_who_has_them(): void
+    {
+        $people = [
+            ['Name' => ['FirstName' => 'No', 'LastName' => 'Email'], 'Email' => []],
+            ['Name' => ['FirstName' => 'Has', 'LastName' => 'Email'], 'Email' => [['Text' => ' Boss@Acme.TEST ']], 'Phone' => [['Text' => '0777']]],
+        ];
+
+        $customer = TradeLacrmMapper::contact(['ContactId' => '5', 'Company Name' => 'Acme'], $people);
+
+        $this->assertSame('Boss@Acme.TEST', $customer['email']);
+        $this->assertSame('0777', $customer['phone']);
+        $this->assertSame('No Email', $customer['contact_name']); // the first person, as before
+    }
+
+    public function test_the_company_own_email_wins_over_a_linked_person(): void
+    {
+        $customer = TradeLacrmMapper::contact($this->company(), [['Name' => ['FirstName' => 'S', 'LastName' => 'J'], 'Email' => [['Text' => 'person@x.test']]]]);
+
+        $this->assertSame('sales@acme.test', \strtolower($customer['email']));
+    }
 }

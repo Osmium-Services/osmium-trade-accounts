@@ -24,7 +24,8 @@ final class TradeLacrmMapper
 
     /**
      * A LACRM contact (GetContact) as a customer. A company contact has no person of its own, so the first linked
-     * person gives the contact name.
+     * person gives the contact name, and the first linked person who has one gives the email or phone when the company
+     * record has none (many companies keep their email only on their people).
      *
      * @param array<string, mixed> $contact
      * @param array<int, array<string, mixed>> $linkedPeople
@@ -35,10 +36,10 @@ final class TradeLacrmMapper
         $address = self::contactAddress($contact);
 
         return [
-            'email' => self::firstText($contact['Email'] ?? []),
+            'email' => self::firstText($contact['Email'] ?? []) ?: self::firstPersonText($linkedPeople, 'Email'),
             'company_name' => \trim((string) ($contact['Company Name'] ?? '')),
             'contact_name' => self::linkedPersonName($linkedPeople),
-            'phone' => self::firstText($contact['Phone'] ?? []),
+            'phone' => self::firstText($contact['Phone'] ?? []) ?: self::firstPersonText($linkedPeople, 'Phone'),
             'address_line_1' => $address['street'],
             'city' => $address['city'],
             'county' => $address['state'],
@@ -213,6 +214,18 @@ final class TradeLacrmMapper
         $lines = \array_map(static fn(string $line): string => \trim($line, " ,\t"), $lines);
 
         return \implode(', ', \array_filter($lines, static fn(string $line): bool => $line !== ''));
+    }
+
+    /** The first email or phone among the linked people, '' when none has one. @param array<int, array<string, mixed>> $people */
+    private static function firstPersonText(array $people, string $field): string
+    {
+        foreach ($people as $person) {
+            $text = self::firstText($person[$field] ?? []);
+            $filled = $text !== '';
+            if ($filled) return $text;
+        }
+
+        return '';
     }
 
     /** @param array<int, array<string, mixed>> $people */
