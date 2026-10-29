@@ -13,9 +13,16 @@ $listContext = [
     <h4 class="mb-0">
         <i class="bx bx-id-card me-2 align-text-bottom"></i>Trade Customers
     </h4>
-    <button type="button" class="btn btn-primary" id="addCustomerButton">
-        <i class="bx bx-plus me-1"></i> Add Customer
-    </button>
+    <div class="d-flex gap-2">
+        <?php if ($admin['canImport']): ?>
+            <a href="<?= $admin['basePath'] ?>trade/import/" class="btn btn-outline-primary">
+                <i class="bx bx-import me-1"></i> Import from Less Annoying CRM
+            </a>
+        <?php endif; ?>
+        <button type="button" class="btn btn-primary" id="addCustomerButton">
+            <i class="bx bx-plus me-1"></i> Add Customer
+        </button>
+    </div>
 </div>
 
 <?= ListView::render($admin['lists']['active'], $admin['customers'], $listContext) ?>

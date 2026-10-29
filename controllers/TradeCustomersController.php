@@ -9,6 +9,7 @@ use Osmium\Modules\Admin\Services\OsmiumAdmin;
 use Osmium\Services\TradeAccounts\Models\TradeAuthFactory;
 use Osmium\Services\TradeAccounts\Models\TradeCustomer;
 use Osmium\Services\TradeAccounts\Models\TradeCustomerInput;
+use Osmium\Services\TradeAccounts\Models\TradeLacrmHooks;
 use Osmium\Services\TradeAccounts\Models\TradeLogo;
 use Osmium\Services\TradeAccounts\Models\TradeStatus;
 use Osmium\Services\TradeAccounts\Models\TradeStatusChange;
@@ -33,6 +34,7 @@ class TradeCustomersController extends AdminController
         $inactive = $model->listByStatus([TradeStatus::SUSPENDED, TradeStatus::CLOSED]);
 
         $this->data['admin']['isAdmin'] = $this->isAdmin();
+        $this->data['admin']['canImport'] = $this->isAdmin() && TradeLacrmHooks::importer($this->osmium->dataSource) !== null;
         $this->data['admin']['lists'] = require __DIR__ . '/../lists/trade-customers.php';
         $this->data['admin']['customers'] = \array_map($this->formatCustomer(...), $active);
         $this->data['admin']['inactiveCustomers'] = \array_map($this->formatCustomer(...), $inactive);

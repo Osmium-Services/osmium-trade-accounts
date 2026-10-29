@@ -50,6 +50,22 @@ final class TradeLacrmHooks
         self::adapter($payload)?->contactUpdated($payload);
     }
 
+    /** The bulk import, or null when LACRM is not the selected source. Errors from LACRM reach the caller. */
+    public static function importer(OsmiumPDO $db): ?TradeLacrmImport
+    {
+        $notSelected = (string) TradeConfig::get()['source'] !== TradeLacrmMapper::SOURCE;
+        if ($notSelected) return null;
+
+        $hooks = new ServiceHooks(new ServiceLoader(new ServiceModel($db)));
+        $customers = new TradeCustomer($db);
+
+        return new TradeLacrmImport(
+            ask: static fn(string $question, array $asked): mixed => $hooks->handle($question, $asked + ['dataSource' => $db]),
+            announce: static fn(string $event, array $told) => $hooks->dispatch($event, $told + ['dataSource' => $db]),
+            findByRef: static fn(string $ref): ?array => $customers->getBySource(source: TradeLacrmMapper::SOURCE, sourceRef: $ref),
+        );
+    }
+
     private static function adapter(array $payload): ?TradeLacrmAdapter
     {
         $db = $payload['dataSource'] ?? null;

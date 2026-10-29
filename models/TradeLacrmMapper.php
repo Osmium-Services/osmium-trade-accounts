@@ -49,6 +49,14 @@ final class TradeLacrmMapper
         ];
     }
 
+    /** A company contact has no person of its own, so its first linked person is fetched to give the contact name. */
+    public static function needsLinkedPeople(array $contact): bool
+    {
+        $companyName = \trim((string) ($contact['Company Name'] ?? ''));
+
+        return $companyName !== '' && !isset($contact['Name']);
+    }
+
     /**
      * A public form submission (the FormFields list of label and value) as an applicant. The extra answers (VAT,
      * registration, delivery address, accounts contact) go into the notes.

@@ -120,11 +120,10 @@ final class TradeLacrmAdapter
      */
     private function linkedPeople(array $contact, string $contactId): array
     {
-        $companyName = \trim((string) ($contact['Company Name'] ?? ''));
-        $isCompany = $companyName !== '' && !isset($contact['Name']);
-        if (!$isCompany) return [];
+        $notCompany = !TradeLacrmMapper::needsLinkedPeople($contact);
+        if ($notCompany) return [];
 
-        $people = $this->askQuietly('lacrm.contact.linked_people', ['companyId' => $contactId, 'companyName' => $companyName]);
+        $people = $this->askQuietly('lacrm.contact.linked_people', ['companyId' => $contactId, 'companyName' => \trim((string) $contact['Company Name'])]);
 
         return \is_array($people) ? $people : [];
     }

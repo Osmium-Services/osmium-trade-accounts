@@ -104,6 +104,17 @@
                 "class": "Osmium\\Services\\TradeAccounts\\Controllers\\TradeSettingsController",
                 "method": "index",
                 "title": "Trade Accounts Settings"
+            },
+            "admin/trade/import": {
+                "controller": "controllers/TradeImportController.php",
+                "class": "Osmium\\Services\\TradeAccounts\\Controllers\\TradeImportController",
+                "method": "index",
+                "title": "Import Customers"
+            },
+            "admin/trade/import/action": {
+                "controller": "controllers/TradeImportController.php",
+                "class": "Osmium\\Services\\TradeAccounts\\Controllers\\TradeImportController",
+                "method": "action"
             }
         }
     },
