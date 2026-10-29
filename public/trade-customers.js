@@ -46,6 +46,12 @@
             document.getElementById(FIELDS[field]).value = isEdit ? (customer[field] || fallback) : fallback;
         });
 
+        // Fields other services added: the customer's saved value, else the field's default
+        document.querySelectorAll('[data-ext-name]').forEach(function (input) {
+            const saved = isEdit && customer.extra ? customer.extra[input.dataset.extName] : undefined;
+            input.value = saved !== undefined ? saved : (input.dataset.extDefault || '');
+        });
+
         document.getElementById('customerLogo').value = '';
         document.getElementById('customerRemoveLogo').checked = false;
         document.getElementById('customerRemoveLogoWrap').classList.toggle('d-none', !(isEdit && customer.hasLogo));
@@ -63,6 +69,10 @@
 
         Object.keys(FIELDS).forEach(function (field) {
             form.append(field, document.getElementById(FIELDS[field]).value);
+        });
+
+        document.querySelectorAll('[data-ext-name]').forEach(function (input) {
+            form.append('ext_' + input.dataset.extName, input.value);
         });
 
         form.append('remove_logo', document.getElementById('customerRemoveLogo').checked ? '1' : '');

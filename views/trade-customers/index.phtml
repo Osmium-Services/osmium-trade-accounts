@@ -114,6 +114,18 @@ $listContext = [
                         </div>
                     </div>
 
+                    <?php foreach ($admin['extraFields'] as $field): ?>
+                        <div class="mb-3">
+                            <label class="form-label" for="customerExt_<?= \htmlspecialchars($field['name']) ?>"><?= \htmlspecialchars($field['label']) ?></label>
+                            <?php if ($field['type'] === 'textarea'): ?>
+                                <textarea class="form-control" rows="3" id="customerExt_<?= \htmlspecialchars($field['name']) ?>" data-ext-name="<?= \htmlspecialchars($field['name']) ?>" data-ext-default="<?= \htmlspecialchars($field['default']) ?>"></textarea>
+                            <?php else: ?>
+                                <input type="<?= $field['type'] === 'number' ? 'number' : 'text' ?>" class="form-control" id="customerExt_<?= \htmlspecialchars($field['name']) ?>" data-ext-name="<?= \htmlspecialchars($field['name']) ?>" data-ext-default="<?= \htmlspecialchars($field['default']) ?>"<?= $field['min'] !== '' ? ' min="' . \htmlspecialchars($field['min']) . '"' : '' ?><?= $field['max'] !== '' ? ' max="' . \htmlspecialchars($field['max']) . '"' : '' ?><?= $field['step'] !== '' ? ' step="' . \htmlspecialchars($field['step']) . '"' : '' ?>>
+                            <?php endif; ?>
+                            <?php if ($field['help'] !== ''): ?><div class="form-text"><?= \htmlspecialchars($field['help']) ?></div><?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+
                     <div class="mb-3">
                         <label class="form-label" for="customerNotes">Notes (optional)</label>
                         <textarea class="form-control" id="customerNotes" rows="3"></textarea>

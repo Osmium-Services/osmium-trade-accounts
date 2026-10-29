@@ -8,6 +8,7 @@ use Osmium\Modules\Admin\Core\AdminController;
 use Osmium\Modules\Admin\Services\OsmiumAdmin;
 use Osmium\Services\TradeAccounts\Models\TradeAuthFactory;
 use Osmium\Services\TradeAccounts\Models\TradeCustomer;
+use Osmium\Services\TradeAccounts\Models\TradeCustomerExtras;
 use Osmium\Services\TradeAccounts\Models\TradeCustomerInput;
 use Osmium\Services\TradeAccounts\Models\TradeLacrmHooks;
 use Osmium\Services\TradeAccounts\Models\TradeLogo;
@@ -36,8 +37,10 @@ class TradeCustomersController extends AdminController
         $this->data['admin']['isAdmin'] = $this->isAdmin();
         $this->data['admin']['canImport'] = $this->isAdmin() && TradeLacrmHooks::importer($this->osmium->dataSource) !== null;
         $this->data['admin']['lists'] = require __DIR__ . '/../lists/trade-customers.php';
-        $this->data['admin']['customers'] = \array_map($this->formatCustomer(...), $active);
-        $this->data['admin']['inactiveCustomers'] = \array_map($this->formatCustomer(...), $inactive);
+        $extras = TradeCustomerExtras::load(db: $this->osmium->dataSource, customerIds: \array_map(static fn(array $row): int => (int) $row['id'], \array_merge($active, $inactive)));
+        $this->data['admin']['extraFields'] = $extras['fields'];
+        $this->data['admin']['customers'] = \array_map(fn(array $row): array => $this->formatCustomer($row) + ['extra' => $extras['values'][(int) $row['id']] ?? []], $active);
+        $this->data['admin']['inactiveCustomers'] = \array_map(fn(array $row): array => $this->formatCustomer($row) + ['extra' => $extras['values'][(int) $row['id']] ?? []], $inactive);
         $this->data['admin']['recentCustomers'] = \array_map($this->formatRecent(...), $model->listRecent());
         $this->data['admin']['deletedCustomers'] = \array_map($this->formatDeleted(...), $model->listDeleted());
 
@@ -92,9 +95,11 @@ class TradeCustomersController extends AdminController
         $data = $this->details($input);
         $this->refuseDuplicateEmail(data: $data, excludeId: 0);
         $logo = $this->validateLogo();
+        $extras = $this->extraValues(input: $input, customerId: 0);
 
         $model = new TradeCustomer($this->osmium->dataSource);
         $id = $model->create($data);
+        TradeCustomerExtras::save(db: $this->osmium->dataSource, customerId: $id, values: $extras);
 
         $hasLogo = $logo !== null;
         if ($hasLogo) $model->setLogo(id: $id, logoFilename: $this->saveLogo($logo));
@@ -114,8 +119,10 @@ class TradeCustomersController extends AdminController
         $this->refuseDuplicateEmail(data: $data, excludeId: $id);
 
         $logo = $this->validateLogo();
+        $extras = $this->extraValues(input: $input, customerId: $id);
 
         $model->update(id: $id, data: $data);
+        TradeCustomerExtras::save(db: $this->osmium->dataSource, customerId: $id, values: $extras);
         $this->applyLogoChange(model: $model, existing: $existing, logo: $logo, remove: !empty($input['remove_logo']));
         $this->logChange(action: 'Updated', id: $id, name: $data['company_name']);
 
@@ -221,6 +228,23 @@ class TradeCustomersController extends AdminController
         if ($problem !== null) throw new \InvalidArgumentException($problem);
 
         return $data;
+    }
+
+    /**
+     * The extra fields other services added to the form, checked by them before anything is saved.
+     *
+     * @return array<string, string>
+     */
+    private function extraValues(array $input, int $customerId): array
+    {
+        $db = $this->osmium->dataSource;
+        $fields = TradeCustomerExtras::load(db: $db, customerIds: [])['fields'];
+        $values = TradeCustomerExtras::submitted(input: $input, fields: $fields);
+
+        $problems = TradeCustomerExtras::validate(db: $db, customerId: $customerId, values: $values);
+        if ($problems !== []) throw new \InvalidArgumentException($problems[0]);
+
+        return $values;
     }
 
     /** @param array<string, mixed> $data */
