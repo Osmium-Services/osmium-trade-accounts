@@ -245,11 +245,14 @@ class TradeAuth
         $this->clearCodeStep();
     }
 
-    /** Logs a customer in directly: for an admin's "Login as customer", which skips the link and code. */
-    public function loginAs(array $customer): void
+    /**
+     * Logs a customer in directly: for an admin's "Login as customer", which skips the link and code and leaves the
+     * session id alone (the admin is already signed in on it).
+     */
+    public function loginAs(array $customer, bool $newSessionId = true): void
     {
         $this->clearCodeStep();
-        ($this->regenerateSession)();
+        if ($newSessionId) ($this->regenerateSession)();
         $this->session[self::SESSION_ID] = (int) $customer['id'];
         $this->session[self::SESSION_TIME] = \time();
     }

@@ -30,6 +30,12 @@ $customerColumns = [
 $customerActions = [
     ['label' => 'Edit', 'icon' => 'bx-edit-alt', 'event' => 'edit'],
     [
+        'label' => 'Log in as customer',
+        'icon' => 'bx-log-in-circle',
+        'event' => 'login-as',
+        'visible' => static fn(array $row, array $context): bool => $row['status'] === 'active' && !empty($context['isAdmin']),
+    ],
+    [
         'label' => 'Activate',
         'icon' => 'bx-check-circle',
         'action' => 'activate',

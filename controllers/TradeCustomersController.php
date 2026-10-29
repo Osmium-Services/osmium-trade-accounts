@@ -6,6 +6,7 @@ namespace Osmium\Services\TradeAccounts\Controllers;
 
 use Osmium\Modules\Admin\Core\AdminController;
 use Osmium\Modules\Admin\Services\OsmiumAdmin;
+use Osmium\Services\TradeAccounts\Models\TradeAuthFactory;
 use Osmium\Services\TradeAccounts\Models\TradeCustomer;
 use Osmium\Services\TradeAccounts\Models\TradeCustomerInput;
 use Osmium\Services\TradeAccounts\Models\TradeLogo;
@@ -77,6 +78,7 @@ class TradeCustomersController extends AdminController
             'update' => $this->update(id: $id, input: $input),
             'delete' => $this->delete($id),
             'restore' => $this->restore($id),
+            'login_as' => $this->loginAs($id),
             'permanently_delete' => $this->permanentlyDelete($id),
             'purge_deleted' => $this->purgeDeleted(),
             default => throw new \InvalidArgumentException('Unknown action'),
@@ -128,6 +130,26 @@ class TradeCustomersController extends AdminController
         $this->logChange(action: self::STATUS_VERBS[$action], id: $id, name: $customer['company_name']);
 
         return ['success' => true, 'id' => $id];
+    }
+
+    /** An admin sees the customer's account exactly as they do; no link or code, and the customer is not told. */
+    private function loginAs(int $id): array
+    {
+        $notAdmin = !$this->isAdmin();
+        if ($notAdmin) throw new \InvalidArgumentException('Only an administrator can log in as a customer');
+
+        $customer = (new TradeCustomer($this->osmium->dataSource))->getById($id);
+        if (!$customer) throw new \InvalidArgumentException('Customer not found');
+
+        $cannotLogIn = !TradeStatus::canLogin($customer['status']);
+        if ($cannotLogIn) throw new \InvalidArgumentException('This customer is not active. Activate them first.');
+
+        TradeAuthFactory::make($this->osmium)->loginAs(customer: $customer, newSessionId: false);
+        $this->logChange(action: 'Logged in as', id: $id, name: $customer['company_name']);
+
+        $slash = ($this->osmium->config->site->urlTrailingSlash ?? false) ? '/' : '';
+
+        return ['success' => true, 'id' => $id, 'url' => '/trade' . $slash];
     }
 
     private function delete(int $id): array
