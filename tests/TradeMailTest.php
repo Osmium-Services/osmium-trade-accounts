@@ -17,16 +17,16 @@ final class TradeMailTest extends TestCase
 
     public function test_the_link_points_at_verify_and_follows_the_sites_trailing_slash_habit(): void
     {
-        $this->assertSame('https://x.test/trade/verify/abc123', TradeMail::linkUrl('https://x.test', self::TOKEN, false));
-        $this->assertSame('https://x.test/trade/verify/abc123/', TradeMail::linkUrl('https://x.test/', self::TOKEN, true));
+        $this->assertSame('https://x.test/trade/verify?t=abc123', TradeMail::linkUrl('https://x.test', self::TOKEN, false));
+        $this->assertSame('https://x.test/trade/verify/?t=abc123', TradeMail::linkUrl('https://x.test/', self::TOKEN, true));
     }
 
     public function test_the_link_email_has_a_button_a_plain_link_and_the_expiry(): void
     {
-        $mail = TradeMail::link(['contact_name' => 'Sam', 'company_name' => 'Acme'], 'https://x.test/trade/verify/abc123', 'Solar Co');
+        $mail = TradeMail::link(['contact_name' => 'Sam', 'company_name' => 'Acme'], 'https://x.test/trade/verify?t=abc123', 'Solar Co');
 
         $this->assertSame('Your Solar Co trade login link', $mail['subject']);
-        $this->assertSame(3, \substr_count($mail['html'], 'https://x.test/trade/verify/abc123'));
+        $this->assertSame(3, \substr_count($mail['html'], 'https://x.test/trade/verify?t=abc123'));
         $this->assertStringContainsString('Hello Sam', $mail['html']);
         $this->assertStringContainsString((string) TradeLoginRules::LINK_MINUTES . ' minutes', $mail['html']);
     }

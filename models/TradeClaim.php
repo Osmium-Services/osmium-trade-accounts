@@ -10,11 +10,11 @@ namespace Osmium\Services\TradeAccounts\Models;
  * not logged in and asks for the account page is shown the login view in place; every form posts to an api/trade-*
  * route, which can redirect.
  *
- * Views and their data. Every form needs a hidden field csrf_token holding the site's usual $template['formToken']:
- *   trade/views/login.phtml    $tradeLogin: action, honeypot (hidden field name, must stay empty), error,
+ * Views and their data. Every form needs a hidden field named token holding the site's usual $template['formToken'] (the other public forms use the same field):
+ *   trade/views/login.phtml    $tradeLogin: action, field email, honeypot (hidden field name, must stay empty), error,
  *                              sent (true after a request), email
- *   trade/views/verify.phtml   $tradeVerify: action, token, tokenOk (false when the address has no usable token)
- *   trade/views/code.phtml     $tradeCode: action, email, error, notice; a second form posts type=resend to the same action
+ *   trade/views/verify.phtml   $tradeVerify: action, token (post it in a hidden field named t), tokenOk (false when the address has no usable token)
+ *   trade/views/code.phtml     $tradeCode: action, email, error, notice; field code; a second form posts type=resend to the same action
  *   trade/views/account.phtml  $tradeAccount: customer (the row), logoutAction
  */
 final class TradeClaim

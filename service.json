@@ -66,6 +66,14 @@
             }
         }
     },
+    "api": {
+        "routes": {
+            "api/trade-login": "controllers/trade-login.php",
+            "api/trade-verify": "controllers/trade-verify.php",
+            "api/trade-code": "controllers/trade-code.php",
+            "api/trade-logout": "controllers/trade-logout.php"
+        }
+    },
     "setup": {
         "postInstallNote": "Add and approve customers under Trade Customers. Customer login and the public pages come in a later version."
     }

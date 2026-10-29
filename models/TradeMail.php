@@ -10,10 +10,10 @@ namespace Osmium\Services\TradeAccounts\Models;
  */
 final class TradeMail
 {
-    /** Where the emailed link points: /trade/verify/<token>, with the site's own habit for a trailing slash. */
+    /** Where the emailed link points: /trade/verify?t=<token>, with the site's own habit for a trailing slash. */
     public static function linkUrl(string $fqdn, string $token, bool $trailingSlash): string
     {
-        return \rtrim($fqdn, '/') . '/trade/verify/' . $token . ($trailingSlash ? '/' : '');
+        return \rtrim($fqdn, '/') . '/trade/verify' . ($trailingSlash ? '/' : '') . '?t=' . $token;
     }
 
     /**
