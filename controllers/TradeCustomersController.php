@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Osmium\Services\TradeAccounts\Controllers;
 
 use Osmium\Modules\Admin\Core\AdminController;
+use Osmium\Modules\Admin\Services\OsmiumAdmin;
 use Osmium\Services\TradeAccounts\Models\TradeCustomer;
 use Osmium\Services\TradeAccounts\Models\TradeCustomerInput;
+use Osmium\Services\TradeAccounts\Models\TradeLogo;
 use Osmium\Services\TradeAccounts\Models\TradeStatus;
 
 /**
@@ -84,8 +86,14 @@ class TradeCustomersController extends AdminController
     {
         $data = $this->details($input);
         $this->refuseDuplicateEmail(data: $data, excludeId: 0);
+        $logo = $this->validateLogo();
 
-        $id = (new TradeCustomer($this->osmium->dataSource))->create($data);
+        $model = new TradeCustomer($this->osmium->dataSource);
+        $id = $model->create($data);
+
+        $hasLogo = $logo !== null;
+        if ($hasLogo) $model->setLogo(id: $id, logoFilename: $this->saveLogo($logo));
+
         $this->logChange(action: 'Created', id: $id, name: $data['company_name']);
 
         return ['success' => true, 'id' => $id];
@@ -100,7 +108,10 @@ class TradeCustomersController extends AdminController
         $data = $this->details($input);
         $this->refuseDuplicateEmail(data: $data, excludeId: $id);
 
+        $logo = $this->validateLogo();
+
         $model->update(id: $id, data: $data);
+        $this->applyLogoChange(model: $model, existing: $existing, logo: $logo, remove: !empty($input['remove_logo']));
         $this->logChange(action: 'Updated', id: $id, name: $data['company_name']);
 
         return ['success' => true, 'id' => $id];
@@ -155,6 +166,7 @@ class TradeCustomersController extends AdminController
         if (!$customer) throw new \InvalidArgumentException('Customer not found');
 
         $this->logChange(action: 'Permanently deleted', id: $id, name: $customer['company_name']);
+        $this->removeLogoFile($customer['logo_filename'] ?? null);
         $model->hardDelete($id);
 
         return ['success' => true, 'id' => $id];
@@ -165,7 +177,12 @@ class TradeCustomersController extends AdminController
         $notAdmin = !$this->isAdmin();
         if ($notAdmin) throw new \Exception('Unauthorized');
 
-        $count = (new TradeCustomer($this->osmium->dataSource))->purgeDeleted();
+        $model = new TradeCustomer($this->osmium->dataSource);
+        foreach ($model->listDeleted() as $customer) {
+            $this->removeLogoFile($customer['logo_filename'] ?? null);
+        }
+
+        $count = $model->purgeDeleted();
         $this->admin->model->changelog->log(description: "Purged {$count} deleted customer(s)", recordType: self::RECORD_TYPE, recordId: 0);
 
         return ['success' => true, 'count' => $count];
@@ -215,6 +232,8 @@ class TradeCustomersController extends AdminController
             'postcode' => (string) ($row['postcode'] ?? ''),
             'country' => (string) $row['country'],
             'notes' => (string) ($row['notes'] ?? ''),
+            'hasLogo' => !empty($row['logo_filename']),
+            'logoHtml' => $this->logoHtml(filename: $row['logo_filename'] ?? null, company: (string) $row['company_name']),
         ];
     }
 
@@ -253,6 +272,129 @@ class TradeCustomersController extends AdminController
             'changed_by' => $row['changed_by'] ?? null,
             'changed_by_avatar' => $row['changed_by_avatar'] ?? null,
         ];
+    }
+
+    /**
+     * The uploaded logo checked and ready to save, or null when none was sent
+     *
+     * @return array{tmp_name: string, extension: string, mimeType: string}|null
+     */
+    private function validateLogo(): ?array
+    {
+        $file = $_FILES['logo'] ?? null;
+        $noFileSent = $file === null || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE;
+        if ($noFileSent) return null;
+
+        $uploadFailed = $file['error'] !== UPLOAD_ERR_OK;
+        if ($uploadFailed) throw new \InvalidArgumentException('The logo did not upload');
+
+        $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+        $typeNotAllowed = !TradeLogo::isAllowedType($mimeType);
+        if ($typeNotAllowed) throw new \InvalidArgumentException('Logo must be a JPG, PNG, GIF, WebP or AVIF image');
+
+        $maxUpload = OsmiumAdmin::getMaxUploadSize();
+        $tooLarge = $file['size'] > $maxUpload['bytes'];
+        if ($tooLarge) throw new \InvalidArgumentException('Logo is too large. Maximum ' . $maxUpload['formatted']);
+
+        return ['tmp_name' => $file['tmp_name'], 'extension' => TradeLogo::TYPES[$mimeType], 'mimeType' => $mimeType];
+    }
+
+    /**
+     * Saves the checked upload under a new random name and returns that name. A logo with a side over
+     * TradeLogo::MAX_DIMENSION is scaled down to fit (never up); a smaller one is moved as uploaded.
+     */
+    private function saveLogo(array $logo): string
+    {
+        $dir = $_SERVER['DOCUMENT_ROOT'] . TradeLogo::DIR;
+        $dirMissing = !\is_dir($dir);
+        if ($dirMissing) \mkdir(directory: $dir, permissions: 0755, recursive: true);
+
+        $filename = \bin2hex(\random_bytes(8)) . '.' . $logo['extension'];
+        $size = \getimagesize($logo['tmp_name']);
+        $isImage = $size !== false;
+        if (!$isImage) throw new \Exception('Failed to read the logo');
+
+        $needsResize = TradeLogo::scale(\max($size[0], $size[1])) < 1.0;
+        $saved = $needsResize
+            ? $this->saveResized(logo: $logo, size: $size, path: $dir . $filename)
+            : \move_uploaded_file(from: $logo['tmp_name'], to: $dir . $filename);
+        if (!$saved) throw new \Exception('Failed to save the logo');
+
+        return $filename;
+    }
+
+    /** @param array{0: int, 1: int} $size Width and height of the upload */
+    private function saveResized(array $logo, array $size, string $path): bool
+    {
+        $gdName = $logo['extension'] === 'jpg' ? 'jpeg' : $logo['extension']; // GD's name for the format
+        $decoder = 'imagecreatefrom' . $gdName;
+        $encoder = 'image' . $gdName;
+        $unsupported = !\function_exists($decoder) || !\function_exists($encoder);
+        if ($unsupported) throw new \Exception("This server can't resize {$logo['extension']} images. Try JPG or PNG instead.");
+
+        $source = $decoder($logo['tmp_name']);
+        if (!$source) throw new \Exception('Failed to process the logo');
+
+        $scale = TradeLogo::scale(\max($size[0], $size[1]));
+        $width = (int) \round($size[0] * $scale);
+        $height = (int) \round($size[1] * $scale);
+
+        $resized = \imagecreatetruecolor(width: $width, height: $height);
+        \imagealphablending(image: $resized, enable: false);
+        \imagesavealpha(image: $resized, enable: true);
+        \imagecopyresampled(
+            dst_image: $resized,
+            src_image: $source,
+            dst_x: 0,
+            dst_y: 0,
+            src_x: 0,
+            src_y: 0,
+            dst_width: $width,
+            dst_height: $height,
+            src_width: $size[0],
+            src_height: $size[1],
+        );
+
+        return $encoder($resized, $path);
+    }
+
+    /** @param array<string, mixed> $existing */
+    private function applyLogoChange(TradeCustomer $model, array $existing, ?array $logo, bool $remove): void
+    {
+        $hasNewLogo = $logo !== null;
+        if ($hasNewLogo) {
+            $model->setLogo(id: (int) $existing['id'], logoFilename: $this->saveLogo($logo));
+            $this->removeLogoFile($existing['logo_filename'] ?? null);
+            return;
+        }
+
+        $shouldRemove = $remove && !empty($existing['logo_filename']);
+        if (!$shouldRemove) return;
+
+        $model->setLogo(id: (int) $existing['id'], logoFilename: null);
+        $this->removeLogoFile($existing['logo_filename']);
+    }
+
+    private function removeLogoFile(?string $filename): void
+    {
+        $hasFile = !empty($filename);
+        if (!$hasFile) return;
+
+        $path = $_SERVER['DOCUMENT_ROOT'] . TradeLogo::DIR . \basename($filename);
+        $exists = \file_exists($path);
+        if ($exists) \unlink($path);
+    }
+
+    /** The logo, or the company's first letter when there is none. */
+    private function logoHtml(?string $filename, string $company): string
+    {
+        $url = TradeLogo::url($filename);
+        $hasLogo = $url !== '';
+        if ($hasLogo) return '<img src="' . \htmlspecialchars($url) . '" alt="" height="28" style="max-width: 80px; object-fit: contain;">';
+
+        $initial = \htmlspecialchars(\strtoupper(\mb_substr($company, 0, 1)));
+
+        return '<span class="rounded bg-label-secondary d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.8rem;">' . $initial . '</span>';
     }
 
     private function logChange(string $action, int $id, string $name): void

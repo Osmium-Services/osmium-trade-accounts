@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Tests\Services\TradeAccounts;
 
 use Osmium\Services\TradeAccounts\Models\TradeCustomerInput;
+use Osmium\Services\TradeAccounts\Models\TradeLogo;
 use Osmium\Services\TradeAccounts\Models\TradeStatus;
 use PHPUnit\Framework\TestCase;
 
 require_once __DIR__ . '/../models/TradeStatus.php';
 require_once __DIR__ . '/../models/TradeCustomerInput.php';
+require_once __DIR__ . '/../models/TradeLogo.php';
 
 final class TradeCustomerTest extends TestCase
 {
@@ -101,5 +103,32 @@ final class TradeCustomerTest extends TestCase
         $data = TradeCustomerInput::parse(['email' => 'a@b.co', 'company_name' => \str_repeat('x', 256)]);
 
         $this->assertSame('Company name must be 255 characters or fewer', TradeCustomerInput::validate($data));
+    }
+
+    // Logo
+
+    public function test_only_image_types_are_allowed_for_logos(): void
+    {
+        foreach (['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'] as $type) {
+            $this->assertTrue(TradeLogo::isAllowedType($type), $type);
+        }
+        foreach (['image/svg+xml', 'application/pdf', 'text/html', ''] as $type) {
+            $this->assertFalse(TradeLogo::isAllowedType($type), $type);
+        }
+    }
+
+    public function test_the_logo_address_is_built_from_the_file_name_only(): void
+    {
+        $this->assertSame('/assets/images/trade/abc.png', TradeLogo::url('abc.png'));
+        $this->assertSame('/assets/images/trade/passwd', TradeLogo::url('../../etc/passwd'));
+        $this->assertSame('', TradeLogo::url(null));
+        $this->assertSame('', TradeLogo::url(''));
+    }
+
+    public function test_big_logos_scale_down_to_fit_and_small_ones_are_left_alone(): void
+    {
+        $this->assertSame(1.0, TradeLogo::scale(400));
+        $this->assertSame(1.0, TradeLogo::scale(120));
+        $this->assertSame(0.5, TradeLogo::scale(800));
     }
 }

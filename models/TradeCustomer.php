@@ -111,6 +111,13 @@ class TradeCustomer extends Model
         $this->database->prepare(sql: $this->loadSqlFile('customer-set-status.sql'), bindings: [':id' => $id, ':status' => $status])->execute();
     }
 
+    /** Set or clear (null) the logo file name on its own, so saving details never touches the logo */
+    public function setLogo(int $id, ?string $logoFilename): void
+    {
+        $bindings = [':id' => $id, ':logo_filename' => $logoFilename];
+        $this->database->prepare(sql: $this->loadSqlFile('customer-set-logo.sql'), bindings: $bindings)->execute();
+    }
+
     public function softDelete(int $id): void
     {
         $this->database->prepare(sql: $this->loadSqlFile('customer-soft-delete.sql'), bindings: [':id' => $id])->execute();

@@ -13,6 +13,7 @@ require_once 'app/core/admin/services/ChangedByCell.php';
 $changedByColumn = ['key' => 'changed_by', 'label' => '', 'type' => 'html', 'sortable' => false, 'render' => fn(array $row, array $context): string => \Osmium\Modules\Admin\Services\ChangedByCell::html($row, (string)($context['avatarUrl'] ?? ''))];
 
 $customerColumns = [
+    ['key' => 'logoHtml', 'label' => '', 'type' => 'raw', 'sortable' => false, 'nowrap' => true],
     ['key' => 'company_name', 'label' => 'Company', 'type' => 'text', 'strong' => true, 'sub' => ['key' => 'contact_name', 'style' => 'muted']],
     [
         'key' => 'email',

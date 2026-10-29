@@ -46,6 +46,10 @@
             document.getElementById(FIELDS[field]).value = isEdit ? (customer[field] || fallback) : fallback;
         });
 
+        document.getElementById('customerLogo').value = '';
+        document.getElementById('customerRemoveLogo').checked = false;
+        document.getElementById('customerRemoveLogoWrap').classList.toggle('d-none', !(isEdit && customer.hasLogo));
+
         new bootstrap.Modal(document.getElementById('customerModal')).show();
     }
 
@@ -60,6 +64,11 @@
         Object.keys(FIELDS).forEach(function (field) {
             form.append(field, document.getElementById(FIELDS[field]).value);
         });
+
+        form.append('remove_logo', document.getElementById('customerRemoveLogo').checked ? '1' : '');
+
+        const logo = document.getElementById('customerLogo').files[0];
+        if (logo) form.append('logo', logo);
 
         return form;
     }
