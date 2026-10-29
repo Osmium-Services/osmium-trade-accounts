@@ -34,6 +34,30 @@
         </div>
     </div>
 
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header"><h5 class="mb-0">Lost sales</h5></div>
+                <div class="card-body">
+                    <p class="mb-3">
+                        Customers whose sale is at the Lost status set in the Less Annoying CRM settings are suspended, so they can no longer log in.
+                        This catches up on sales lost before webhooks were registered, or while one was missed. Closed accounts are left closed.
+                    </p>
+                    <button type="button" class="btn btn-primary" id="lostPreviewButton">
+                        <i class="bx bx-search me-1"></i> Check lost sales
+                    </button>
+                    <div id="lostResult" class="alert d-none mt-3"></div>
+                    <div id="lostList" class="mt-3 d-none">
+                        <ul class="list-group mb-3" id="lostItems"></ul>
+                        <button type="button" class="btn btn-danger" id="lostRunButton">
+                            <i class="bx bx-pause-circle me-1"></i> Suspend them
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script nonce="<?= $cspNonce ?? '' ?>">
         window.TradeImportConfig = { basePath: adminBasePath };
     </script>

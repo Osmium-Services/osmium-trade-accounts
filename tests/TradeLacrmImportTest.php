@@ -38,7 +38,9 @@ final class TradeLacrmImportTest extends TestCase
             },
             announce: function (string $event, array $payload) use ($saves): void {
                 $this->announced[] = [$event, $payload];
-                if ($saves) $this->customers[$payload['customer']['source_ref']] = $payload['customer'];
+                $ref = $payload['customer']['source_ref'];
+                if ($saves && $event === 'trade.customer.suspended') $this->customers[$ref]['status'] = 'suspended';
+                if ($saves && $event !== 'trade.customer.suspended') $this->customers[$ref] = $payload['customer'];
             },
             findByRef: fn(string $ref): ?array => $this->customers[$ref] ?? null,
             emailOwner: static fn(string $email): ?string => $emailOwners[$email] ?? null,
@@ -162,5 +164,46 @@ final class TradeLacrmImportTest extends TestCase
         $this->assertSame(0, $result['imported']);
         $this->assertSame(['Name 1: its email is already used by AG Campers, and an email can belong to only one customer'], $result['skipped']);
         $this->assertSame([], $this->announced);
+    }
+
+    private function lost(string ...$ids): array
+    {
+        return $this->won(...$ids);
+    }
+
+    public function test_lost_preview_lists_only_active_or_pending_customers_and_counts_the_rest(): void
+    {
+        $import = $this->import(['lacrm.sales.lost' => [...$this->lost('1', '2', '3', '4', '5', '5')]], [
+            '1' => ['status' => 'active', 'company_name' => 'One Ltd'],
+            '2' => ['status' => 'pending', 'company_name' => 'Two Ltd'],
+            '3' => ['status' => 'suspended', 'company_name' => 'Three Ltd'],
+            '4' => ['status' => 'closed', 'company_name' => 'Four Ltd'],
+        ]);
+
+        $this->assertSame(['suspend' => [['id' => '1', 'name' => 'One Ltd'], ['id' => '2', 'name' => 'Two Ltd']], 'ignored' => 3], $import->previewLost());
+    }
+
+    public function test_suspend_lost_announces_a_suspension_for_each_and_reports_the_count(): void
+    {
+        $import = $this->import(['lacrm.sales.lost' => $this->lost('1', '2')], ['1' => ['status' => 'active', 'company_name' => 'One Ltd'], '2' => ['status' => 'active', 'company_name' => 'Two Ltd']]);
+
+        $result = $import->suspendLost();
+
+        $this->assertSame(['suspended' => 2, 'ignored' => 0, 'failed' => []], $result);
+        $this->assertSame([['trade.customer.suspended', ['customer' => ['source' => 'lacrm', 'source_ref' => '1']]], ['trade.customer.suspended', ['customer' => ['source' => 'lacrm', 'source_ref' => '2']]]], $this->announced);
+    }
+
+    public function test_a_customer_who_is_not_suspended_by_the_event_is_reported(): void
+    {
+        $result = $this->import(['lacrm.sales.lost' => $this->lost('1')], ['1' => ['status' => 'active', 'company_name' => 'One Ltd']], saves: false)->suspendLost();
+
+        $this->assertSame(0, $result['suspended']);
+        $this->assertSame(['One Ltd: was not suspended'], $result['failed']);
+    }
+
+    public function test_lost_sales_are_null_when_lacrm_does_not_answer(): void
+    {
+        $this->assertNull($this->import([])->previewLost());
+        $this->assertNull($this->import([])->suspendLost());
     }
 }

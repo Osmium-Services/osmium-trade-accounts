@@ -7,6 +7,8 @@ namespace Osmium\Services\TradeAccounts\Models;
 /**
  * Brings in everyone LACRM holds at its Won status as active customers, the same as a won sale announced one at a
  * time. Contacts that are already customers are left alone: LACRM's webhook keeps them current. Safe to run twice.
+ * The other way round, suspends the customers LACRM holds at its Lost status, to catch up on sales lost before the
+ * webhook was registered or while it was missed.
  * Everything outside is passed in, so this can be tested without LACRM or a database.
  */
 final class TradeLacrmImport
@@ -63,6 +65,50 @@ final class TradeLacrmImport
         }
 
         return ['imported' => $imported, 'existing' => $preview['existing'], 'skipped' => $skipped];
+    }
+
+    /**
+     * Customers LACRM says are lost and who can still be suspended (active or pending: a closed account stays closed).
+     *
+     * @return array{suspend: array<int, array{id: string, name: string}>, ignored: int}|null null as preview()
+     */
+    public function previewLost(): ?array
+    {
+        $items = ($this->ask)('lacrm.sales.lost', []);
+        $unavailable = !\is_array($items);
+        if ($unavailable) return null;
+
+        $suspend = [];
+        $ignored = 0;
+        foreach (self::contactsAmong($items) as $contact) {
+            $customer = ($this->findByRef)($contact['id']);
+            $canSuspend = $customer !== null && \in_array($customer['status'], [TradeStatus::ACTIVE, TradeStatus::PENDING], true);
+            if ($canSuspend) $suspend[] = ['id' => $contact['id'], 'name' => (string) $customer['company_name']];
+            if (!$canSuspend) $ignored++;
+        }
+
+        return ['suspend' => $suspend, 'ignored' => $ignored];
+    }
+
+    /** @return array{suspended: int, ignored: int, failed: string[]}|null null as preview() */
+    public function suspendLost(): ?array
+    {
+        $preview = $this->previewLost();
+        $unavailable = $preview === null;
+        if ($unavailable) return null;
+
+        $suspended = 0;
+        $failed = [];
+        foreach ($preview['suspend'] as $row) {
+            ($this->announce)('trade.customer.suspended', ['customer' => ['source' => TradeLacrmMapper::SOURCE, 'source_ref' => $row['id']]]);
+
+            $now = ($this->findByRef)($row['id']);
+            $done = $now !== null && $now['status'] === TradeStatus::SUSPENDED;
+            if ($done) $suspended++;
+            if (!$done) $failed[] = "{$row['name']}: was not suspended";
+        }
+
+        return ['suspended' => $suspended, 'ignored' => $preview['ignored'], 'failed' => $failed];
     }
 
     // Inside

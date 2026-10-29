@@ -70,6 +70,15 @@ class TradeImportController extends AdminController
             return ['success' => true] + $preview;
         }
 
+        if ($action === 'lost_preview') {
+            $preview = $importer->previewLost();
+            if ($preview === null) throw new \RuntimeException($unavailable);
+
+            return ['success' => true] + $preview;
+        }
+
+        if ($action === 'lost_run') return $this->suspendLost($importer, $unavailable);
+
         $isRun = $action === 'run';
         if (!$isRun) throw new \InvalidArgumentException('Unknown action');
 
@@ -78,6 +87,21 @@ class TradeImportController extends AdminController
 
         $this->admin->model->changelog->log(
             description: "Imported {$result['imported']} trade customers from Less Annoying CRM",
+            recordType: self::RECORD_TYPE,
+            recordId: 0,
+        );
+
+        return ['success' => true] + $result;
+    }
+
+    /** @return array<string, mixed> */
+    private function suspendLost(TradeLacrmImport $importer, string $unavailable): array
+    {
+        $result = $importer->suspendLost();
+        if ($result === null) throw new \RuntimeException($unavailable);
+
+        $this->admin->model->changelog->log(
+            description: "Suspended {$result['suspended']} trade customers whose sales are lost in Less Annoying CRM",
             recordType: self::RECORD_TYPE,
             recordId: 0,
         );
