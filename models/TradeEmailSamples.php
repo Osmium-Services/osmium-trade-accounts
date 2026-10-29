@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Osmium\Services\TradeAccounts\Models;
 
+use Osmium\Core\Library\BrandLogo;
 use Osmium\Core\Library\MailerFactory;
 
 /**
@@ -33,7 +34,7 @@ final class TradeEmailSamples
     {
         $site = $payload['osmium']->config->site;
         $url = TradeMail::linkUrl(fqdn: (string) $site->FQDN, token: self::SAMPLE_TOKEN, trailingSlash: (bool) ($site->urlTrailingSlash ?? false));
-        $mail = TradeMail::link(customer: self::SAMPLE_CUSTOMER, url: $url, siteName: (string) $site->name);
+        $mail = TradeMail::link(customer: self::SAMPLE_CUSTOMER, url: $url, siteName: (string) $site->name, brand: BrandLogo::emailVars(fqdn: (string) $site->FQDN, siteName: (string) $site->name));
 
         return self::send(payload: $payload, mail: $mail);
     }
@@ -44,7 +45,8 @@ final class TradeEmailSamples
      */
     public static function sendCode(array $payload): array
     {
-        $mail = TradeMail::code(customer: self::SAMPLE_CUSTOMER, code: self::SAMPLE_CODE, siteName: (string) $payload['osmium']->config->site->name);
+        $site = $payload['osmium']->config->site;
+        $mail = TradeMail::code(customer: self::SAMPLE_CUSTOMER, code: self::SAMPLE_CODE, siteName: (string) $site->name, brand: BrandLogo::emailVars(fqdn: (string) $site->FQDN, siteName: (string) $site->name));
 
         return self::send(payload: $payload, mail: $mail);
     }

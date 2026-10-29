@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Osmium\Services\TradeAccounts\Models;
 
+use Osmium\Core\Library\BrandLogo;
 use Osmium\Core\Library\MailerFactory;
 
 /**
@@ -21,14 +22,24 @@ class TradeMailer implements TradeLoginMailer
         $site = $this->osmium->config->site;
         $url = TradeMail::linkUrl(fqdn: (string) $site->FQDN, token: $token, trailingSlash: (bool) ($site->urlTrailingSlash ?? false));
 
-        return $this->send(customer: $customer, mail: TradeMail::link(customer: $customer, url: $url, siteName: (string) $site->name));
+        $mail = TradeMail::link(customer: $customer, url: $url, siteName: (string) $site->name, brand: $this->brand());
+
+        return $this->send(customer: $customer, mail: $mail);
     }
 
     public function sendCode(array $customer, string $code): bool
     {
-        $mail = TradeMail::code(customer: $customer, code: $code, siteName: (string) $this->osmium->config->site->name);
+        $mail = TradeMail::code(customer: $customer, code: $code, siteName: (string) $this->osmium->config->site->name, brand: $this->brand());
 
         return $this->send(customer: $customer, mail: $mail);
+    }
+
+    /** @return array{logoUrl: string, logoDarkCss: string, logoDarkImg: string} */
+    private function brand(): array
+    {
+        $site = $this->osmium->config->site;
+
+        return BrandLogo::emailVars(fqdn: (string) $site->FQDN, siteName: (string) $site->name);
     }
 
     /** @param array{subject: string, html: string} $mail */
