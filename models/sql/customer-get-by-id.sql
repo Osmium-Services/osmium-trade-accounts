@@ -1,0 +1,1 @@
+SELECT * FROM {TABLE} WHERE id = :id AND deleted_at IS NULL LIMIT 1

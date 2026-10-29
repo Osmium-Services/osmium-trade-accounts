@@ -1,0 +1,124 @@
+<?php
+
+use Osmium\Modules\Admin\Core\ListView;
+
+$listContext = [
+    'adminUrl' => $adminUrl,
+    'isAdmin' => $admin['isAdmin'],
+    'editors' => [],
+    'avatarUrl' => $admin['avatarUrl'] ?? '',
+];
+?>
+<div class="d-flex justify-content-between align-items-center py-3 mb-4">
+    <h4 class="mb-0">
+        <i class="bx bx-id-card me-2 align-text-bottom"></i>Trade Customers
+    </h4>
+    <button type="button" class="btn btn-primary" id="addCustomerButton">
+        <i class="bx bx-plus me-1"></i> Add Customer
+    </button>
+</div>
+
+<?= ListView::render($admin['lists']['active'], $admin['customers'], $listContext) ?>
+<?= ListView::render($admin['lists']['inactive'], $admin['inactiveCustomers'], $listContext) ?>
+<?= ListView::render($admin['lists']['recent'], $admin['recentCustomers'], $listContext) ?>
+<?= ListView::render($admin['lists']['deleted'], $admin['deletedCustomers'], $listContext) ?>
+
+<div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="customerForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customerModalTitle">Add Customer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="customerId">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="customerCompany">Company</label>
+                            <input type="text" class="form-control" id="customerCompany" maxlength="255" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="customerContact">Contact name (optional)</label>
+                            <input type="text" class="form-control" id="customerContact" maxlength="255">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="customerEmail">Email</label>
+                            <input type="email" class="form-control" id="customerEmail" maxlength="255" required>
+                            <div class="form-text">They log in with this address.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="customerEmail2">Second email (optional)</label>
+                            <input type="email" class="form-control" id="customerEmail2" maxlength="255">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="customerPhone">Phone (optional)</label>
+                            <input type="text" class="form-control" id="customerPhone" maxlength="50">
+                        </div>
+                        <div class="col-md-6 mb-3" id="customerStatusWrap">
+                            <label class="form-label" for="customerStatus">Starting status</label>
+                            <select class="form-select" id="customerStatus">
+                                <option value="pending">Pending</option>
+                                <option value="active">Active</option>
+                            </select>
+                            <div class="form-text">Change it later with Activate, Suspend or Close account.</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="customerAddress1">Address (optional)</label>
+                        <input type="text" class="form-control mb-2" id="customerAddress1" maxlength="255">
+                        <input type="text" class="form-control" id="customerAddress2" maxlength="255">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="customerCity">Town / city</label>
+                            <input type="text" class="form-control" id="customerCity" maxlength="100">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="customerCounty">County</label>
+                            <input type="text" class="form-control" id="customerCounty" maxlength="100">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label" for="customerPostcode">Postcode</label>
+                            <input type="text" class="form-control" id="customerPostcode" maxlength="20">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="customerCountry">Country</label>
+                        <input type="text" class="form-control" id="customerCountry" maxlength="100" value="United Kingdom">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="customerNotes">Notes (optional)</label>
+                        <textarea class="form-control" id="customerNotes" rows="3"></textarea>
+                    </div>
+
+                    <div id="customerResult" class="alert d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="customerSaveButton">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script nonce="<?= $cspNonce ?? '' ?>">
+    window.TradeCustomersConfig = {
+        basePath: adminBasePath,
+        customers: <?= \json_encode(\array_column(\array_merge($admin['customers'], $admin['inactiveCustomers']), null, 'id'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
+    };
+</script>
+<script src="/assets/admin/js/list-view.js<?= $adminAssetVersion('/assets/admin/js/list-view.js') ?>"></script>
+<script src="/assets/services/osmium-trade-accounts/trade-customers.js<?= $adminAssetVersion('/assets/services/osmium-trade-accounts/trade-customers.js') ?>"></script>
