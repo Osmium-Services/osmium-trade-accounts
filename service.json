@@ -17,6 +17,26 @@
         "models"
     ],
     "migrations": "migrations/",
+    "hooks": {
+        "page.claim": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeClaim::page"
+        ],
+        "service.installed": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradePages::onEnabled"
+        ],
+        "service.enabled": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradePages::onEnabled"
+        ],
+        "service.disabled": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradePages::onDisabled"
+        ],
+        "service.removing": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradePages::onDisabled"
+        ],
+        "pages.protected_urls": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradePages::protectedUrls"
+        ]
+    },
     "admin": {
         "menu": {
             "section": "Content",
