@@ -63,6 +63,12 @@ final class TradeLacrmHooks
             ask: static fn(string $question, array $asked): mixed => $hooks->handle($question, $asked + ['dataSource' => $db]),
             announce: static fn(string $event, array $told) => $hooks->dispatch($event, $told + ['dataSource' => $db]),
             findByRef: static fn(string $ref): ?array => $customers->getBySource(source: TradeLacrmMapper::SOURCE, sourceRef: $ref),
+            emailOwner: static function (string $email) use ($customers): ?string {
+                $holder = $customers->getByEmail($email);
+                $tiedElsewhere = $holder !== null && $holder['source'] !== null;
+
+                return $tiedElsewhere ? (string) $holder['company_name'] : null;
+            },
         );
     }
 

@@ -15,8 +15,10 @@ final class TradeLacrmImport
      * @param callable(string, array): mixed $ask Asks another service a question; errors are allowed to throw
      * @param callable(string, array): void $announce Fires a neutral event
      * @param callable(string): ?array $findByRef The live customer with this LACRM contact id, or null
+     * @param callable(string): ?string $emailOwner The company already tied to another contact that uses this email
+     *        (an email is one customer's login), or null when it is free or only a hand-made customer has it
      */
-    public function __construct(private $ask, private $announce, private $findByRef)
+    public function __construct(private $ask, private $announce, private $findByRef, private $emailOwner)
     {
     }
 
@@ -78,6 +80,9 @@ final class TradeLacrmImport
 
             $problem = TradeCustomerInput::validate(TradeCustomerInput::parse($customer));
             if ($problem !== null) return $problem;
+
+            $owner = ($this->emailOwner)(\strtolower((string) $customer['email']));
+            if ($owner !== null) return "its email is already used by {$owner}, and an email can belong to only one customer";
 
             ($this->announce)('trade.customer.approved', ['customer' => $customer]);
         } catch (\Throwable $e) {

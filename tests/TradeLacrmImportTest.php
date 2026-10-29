@@ -22,7 +22,7 @@ final class TradeLacrmImportTest extends TestCase
     private array $customers = [];
 
     /** @param array<string, mixed> $answers question => answer (a Throwable is thrown) */
-    private function import(array $answers, array $customers = [], bool $saves = true): TradeLacrmImport
+    private function import(array $answers, array $customers = [], bool $saves = true, array $emailOwners = []): TradeLacrmImport
     {
         $this->announced = [];
         $this->asked = [];
@@ -41,6 +41,7 @@ final class TradeLacrmImportTest extends TestCase
                 if ($saves) $this->customers[$payload['customer']['source_ref']] = $payload['customer'];
             },
             findByRef: fn(string $ref): ?array => $this->customers[$ref] ?? null,
+            emailOwner: static fn(string $email): ?string => $emailOwners[$email] ?? null,
         );
     }
 
@@ -97,6 +98,7 @@ final class TradeLacrmImportTest extends TestCase
             },
             announce: static fn(string $event, array $told) => null,
             findByRef: static fn(string $ref): ?array => $ref === '1' ? ['id' => 1] : null,
+            emailOwner: static fn(string $email): ?string => null,
         );
 
         $import->run();
@@ -148,5 +150,17 @@ final class TradeLacrmImportTest extends TestCase
         $this->expectExceptionMessage('bad key');
 
         $this->import(['lacrm.sales.won' => new \RuntimeException('bad key')])->preview();
+    }
+
+    public function test_a_contact_whose_email_belongs_to_another_contacts_customer_is_skipped_with_the_owner_named(): void
+    {
+        $result = $this->import(
+            ['lacrm.sales.won' => $this->won('1'), 'lacrm.contacts.get_many' => ['results' => ['1' => $this->company('One Ltd', 'Shared@Y.test')], 'errors' => []]],
+            emailOwners: ['shared@y.test' => 'AG Campers'],
+        )->run();
+
+        $this->assertSame(0, $result['imported']);
+        $this->assertSame(['Name 1: its email is already used by AG Campers, and an email can belong to only one customer'], $result['skipped']);
+        $this->assertSame([], $this->announced);
     }
 }
