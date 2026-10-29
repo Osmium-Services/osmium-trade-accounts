@@ -61,6 +61,14 @@
                     "route": "admin/trade/customers",
                     "activePattern": "admin/trade/customers*",
                     "role": null
+                },
+                {
+                    "id": "trade-settings",
+                    "label": "Trade Accounts",
+                    "icon": "bx bx-id-card",
+                    "route": "admin/settings/trade",
+                    "activePattern": "admin/settings/trade*",
+                    "role": "admin"
                 }
             ]
         },
@@ -75,6 +83,12 @@
                 "controller": "controllers/TradeCustomersController.php",
                 "class": "Osmium\\Services\\TradeAccounts\\Controllers\\TradeCustomersController",
                 "method": "action"
+            },
+            "admin/settings/trade": {
+                "controller": "controllers/TradeSettingsController.php",
+                "class": "Osmium\\Services\\TradeAccounts\\Controllers\\TradeSettingsController",
+                "method": "index",
+                "title": "Trade Accounts Settings"
             }
         }
     },

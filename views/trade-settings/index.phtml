@@ -1,0 +1,68 @@
+<div class="d-flex justify-content-between align-items-center py-3 mb-4">
+    <h4 class="mb-0"><i class="bx bx-id-card me-2"></i>Trade Accounts</h4>
+    <button type="submit" form="settings-form" class="btn btn-primary">
+        <i class="bx bx-save me-1"></i> Save Settings
+    </button>
+</div>
+
+<?php if ($admin['settingsSaved']): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        Settings saved successfully!
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<?php if ($admin['settingsError']): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= \htmlspecialchars((string) $admin['settingsError']) ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+<?php endif; ?>
+
+<?php $trade = $admin['config']['trade']; ?>
+
+<form method="POST" action="<?= $admin['basePath'] ?>settings/trade/" id="settings-form">
+    <input type="hidden" name="token" value="<?= $template['formToken'] ?? '' ?>">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bx bx-user-plus me-2"></i>Where customers come from</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="source" class="form-label fw-semibold">Customer source</label>
+                        <select class="form-select" id="source" name="source">
+                            <option value="">None - I add and approve customers myself</option>
+                            <?php foreach ($admin['tradeSources'] as $option): ?>
+                                <option value="<?= \htmlspecialchars($option['id']) ?>" <?= $option['id'] === $trade['source'] ? 'selected' : '' ?> <?= $option['available'] ? '' : 'disabled' ?>>
+                                    <?= \htmlspecialchars($option['label']) ?><?= ($option['available'] && !$option['ready']) ? ' (not set up yet)' : '' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">
+                            With a source selected, new applicants and approvals from it create and update customers here.
+                            With None, customers are only the ones you add under Trade Customers.
+                            <?php if (!$admin['tradeSources']): ?>No source is installed on this site.<?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bx bx-lock-alt me-2"></i>Login</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="code_required" name="code_required" <?= $trade['codeRequired'] ? 'checked' : '' ?>>
+                            <label class="form-check-label fw-semibold" for="code_required">Ask for an emailed code after the login link</label>
+                        </div>
+                        <div class="form-text">On: customers click the emailed link, then type a 6-digit code sent to the same address. Off: the link alone logs them in.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
