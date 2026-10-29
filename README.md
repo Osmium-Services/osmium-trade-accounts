@@ -42,6 +42,8 @@ Trade acts only on events whose `customer.source` is the source selected in sett
 
 Customers are found by source and `source_ref`, else by email. Events that write details need a complete, valid customer; others are logged and ignored.
 
+Trade answers `trade.customer.current` (`handle`; payload `osmium`): the logged-in trade customer as `id`, `company_name`, `contact_name` and `status`, or null when nobody is logged in (or the customer has since been suspended or closed). It lets another service, such as Trade Ordering or Trade Downloads, serve trade customers only without calling this service's code, and it shares no contact details.
+
 Trade announces `trade.customer.status_changed` (`customerId`, `from`, `to`, `dataSource`) whenever a status changes, and collects `trade.sources` answers (`id`, `label`, `ready`, `settingsRoute`) to fill the source setting.
 
 ## Extra customer fields
