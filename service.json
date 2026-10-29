@@ -47,6 +47,21 @@
         ],
         "trade.customer.updated": [
             "Osmium\\Services\\TradeAccounts\\Models\\TradeEvents::updated"
+        ],
+        "trade.sources": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::source"
+        ],
+        "lacrm.form.submitted": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::formSubmitted"
+        ],
+        "lacrm.sale.won": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::saleWon"
+        ],
+        "lacrm.sale.lost": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::saleLost"
+        ],
+        "lacrm.contact.updated": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::contactUpdated"
         ]
     },
     "admin": {
