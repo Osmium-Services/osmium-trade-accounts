@@ -118,6 +118,27 @@ class TradeCustomer extends Model
         $this->database->prepare(sql: $this->loadSqlFile('customer-set-logo.sql'), bindings: $bindings)->execute();
     }
 
+    public function addFailedLogin(int $id): void
+    {
+        $this->database->prepare(sql: $this->loadSqlFile('customer-add-failed-login.sql'), bindings: [':id' => $id])->execute();
+    }
+
+    /** Forgets earlier failures and lifts any lock, after a good login or when a lock has run out. */
+    public function clearFailedLogins(int $id): void
+    {
+        $this->database->prepare(sql: $this->loadSqlFile('customer-clear-failed-logins.sql'), bindings: [':id' => $id])->execute();
+    }
+
+    public function lock(int $id, int $seconds = TradeLoginRules::LOCKOUT_SECONDS): void
+    {
+        $this->database->prepare(sql: $this->loadSqlFile('customer-lock.sql'), bindings: [':id' => $id, ':seconds' => $seconds])->execute();
+    }
+
+    public function touchLastLogin(int $id): void
+    {
+        $this->database->prepare(sql: $this->loadSqlFile('customer-touch-last-login.sql'), bindings: [':id' => $id])->execute();
+    }
+
     public function softDelete(int $id): void
     {
         $this->database->prepare(sql: $this->loadSqlFile('customer-soft-delete.sql'), bindings: [':id' => $id])->execute();

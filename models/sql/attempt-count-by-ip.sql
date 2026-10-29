@@ -1,0 +1,1 @@
+SELECT COUNT(*) AS total FROM {TABLE} WHERE ip_address = :ip_address AND reason IN ('link_sent', 'unknown_email', 'inactive', 'locked', 'email_rate_limited') AND created_at > DATE_SUB(NOW(), INTERVAL :window_seconds SECOND)
