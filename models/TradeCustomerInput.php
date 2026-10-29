@@ -10,6 +10,8 @@ namespace Osmium\Services\TradeAccounts\Models;
  */
 final class TradeCustomerInput
 {
+    private const UK_NAMES = ['uk', 'u k', 'gb', 'gbr', 'great britain', 'united kingdom', 'england', 'scotland', 'wales', 'northern ireland'];
+
     private const MAX = ['email' => 255, 'email2' => 255, 'company_name' => 255, 'contact_name' => 255, 'phone' => 50,
         'address_line_1' => 255, 'address_line_2' => 255, 'city' => 100, 'county' => 100, 'postcode' => 20, 'country' => 100];
 
@@ -35,7 +37,7 @@ final class TradeCustomerInput
             'city' => self::nullIfEmpty($input['city'] ?? ''),
             'county' => self::nullIfEmpty($input['county'] ?? ''),
             'postcode' => self::postcode($input['postcode'] ?? ''),
-            'country' => $country === '' ? 'United Kingdom' : $country,
+            'country' => self::country($country),
             'status' => TradeStatus::isValid($status) ? $status : TradeStatus::PENDING,
             'source' => self::nullIfEmpty($input['source'] ?? ''),
             'source_ref' => self::nullIfEmpty($input['source_ref'] ?? ''),
@@ -75,6 +77,15 @@ final class TradeCustomerInput
         }
 
         return null;
+    }
+
+    /** UK-only market: the usual ways of writing the UK (or a UK nation) all become "United Kingdom", and empty means the UK too. */
+    private static function country(string $country): string
+    {
+        $key = \strtolower(\trim((string) \preg_replace('/[\s.]+/', ' ', $country)));
+        $isUk = $key === '' || \in_array($key, self::UK_NAMES, true);
+
+        return $isUk ? 'United Kingdom' : $country;
     }
 
     private static function text(mixed $value): string

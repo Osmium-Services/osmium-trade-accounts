@@ -65,6 +65,15 @@ final class TradeCustomerTest extends TestCase
         $this->assertSame('pending', $data['status']);
     }
 
+    public function test_the_usual_ways_of_writing_the_uk_all_become_united_kingdom_and_other_countries_are_kept(): void
+    {
+        foreach (['UK', 'U.K.', ' gb ', 'Great Britain', 'Scotland', 'england', 'WALES', 'Northern Ireland', 'united kingdom', ''] as $written) {
+            $this->assertSame('United Kingdom', TradeCustomerInput::parse(['country' => $written])['country'], "'{$written}'");
+        }
+
+        $this->assertSame('Ireland', TradeCustomerInput::parse(['country' => 'Ireland'])['country']);
+    }
+
     public function test_an_unknown_status_falls_back_to_pending_and_a_known_one_is_kept(): void
     {
         $this->assertSame('pending', TradeCustomerInput::parse(['status' => 'nonsense'])['status']);
