@@ -48,6 +48,18 @@ final class TradeCustomerExtrasTest extends TestCase
         $this->assertSame('Trade discount %', $merged['fields'][0]['label']); // the first to claim a name keeps it
     }
 
+    public function test_a_select_needs_options_and_keeps_only_labelled_ones(): void
+    {
+        $merged = TradeCustomerExtras::merge([['fields' => [
+            $this->field('terms', ['type' => 'select', 'options' => ['' => '-- Select --', '7' => '7 Days', 'bad' => ' ', 'obj' => ['x']]]),
+            $this->field('empty_select', ['type' => 'select']),
+            $this->field('empty_options', ['type' => 'select', 'options' => []]),
+        ]]]);
+
+        $this->assertSame(['terms'], \array_column($merged['fields'], 'name'));
+        $this->assertSame(['' => '-- Select --', '7' => '7 Days'], $merged['fields'][0]['options']);
+    }
+
     public function test_values_are_kept_per_customer_for_defined_fields_only(): void
     {
         $merged = TradeCustomerExtras::merge([

@@ -16,7 +16,7 @@ use Osmium\Core\Models\ServiceModel;
  */
 final class TradeCustomerExtras
 {
-    public const TYPES = ['text', 'number', 'textarea'];
+    public const TYPES = ['text', 'number', 'textarea', 'select'];
     private const NAME_PATTERN = '/^[a-z][a-z0-9_]{0,63}$/';
     private const FORM_PREFIX = 'ext_';
 
@@ -106,6 +106,10 @@ final class TradeCustomerExtras
         $usable = \preg_match(self::NAME_PATTERN, $name) === 1 && $label !== '' && \in_array($type, self::TYPES, true);
         if (!$usable) return null;
 
+        $options = self::options($field['options'] ?? null);
+        $noOptions = $type === 'select' && $options === [];
+        if ($noOptions) return null; // a dropdown with nothing to pick is not usable
+
         return [
             'name' => $name,
             'label' => $label,
@@ -115,7 +119,20 @@ final class TradeCustomerExtras
             'min' => \is_numeric($field['min'] ?? null) ? (string) $field['min'] : '',
             'max' => \is_numeric($field['max'] ?? null) ? (string) $field['max'] : '',
             'step' => \is_numeric($field['step'] ?? null) ? (string) $field['step'] : '',
+            'options' => $options,
         ];
+    }
+
+    /** @return array<string, string> value => label for a select; anything else is dropped */
+    private static function options(mixed $options): array
+    {
+        $clean = [];
+        foreach ((array) $options as $value => $label) {
+            $usable = \is_scalar($label) && \trim((string) $label) !== '';
+            if ($usable) $clean[(string) $value] = \trim((string) $label);
+        }
+
+        return $clean;
     }
 
     // The hook calls

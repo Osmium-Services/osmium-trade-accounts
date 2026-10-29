@@ -48,7 +48,7 @@ Another service can add its own fields to the customer edit form and keep the va
 
 | Hook | Kind | Payload | Answer |
 |---|---|---|---|
-| `trade.customer.fields` | collect | `customerIds` (the customers on the page), `dataSource` | `['fields' => [['name', 'label', 'type' (text, number, textarea), 'help', 'default', 'min', 'max', 'step']], 'values' => [customerId => [name => value]]]`. Field names are lower-case letters, digits and underscores, so prefix yours; the first service to claim a name keeps it |
+| `trade.customer.fields` | collect | `customerIds` (the customers on the page), `dataSource` | `['fields' => [['name', 'label', 'type' (text, number, textarea, select), 'help', 'default', 'min', 'max', 'step', 'options' (value => label, for a select)]], 'values' => [customerId => [name => value]]]`. Field names are lower-case letters, digits and underscores, so prefix yours; the first service to claim a name keeps it |
 | `trade.customer.fields.validate` | collect | `customerId` (0 for a new customer), `values` (name => text), `dataSource` | an error message, a list of them, or nothing. The first message stops the save |
 | `trade.customer.fields.save` | dispatch | `customerId`, `values`, `dataSource` | none; fired after the customer is saved, also for a new customer |
 
