@@ -48,11 +48,14 @@ class TradeImportController extends AdminController
 
         \set_time_limit(300); // LACRM is asked for each contact, a batch at a time
 
+        // The response is sent outside the try: jsonSuccess() ends the request by throwing, and a catch here would turn that into an error
         try {
-            $this->admin->jsonSuccess($this->run(importer: $importer, action: (string) ($input['action'] ?? '')));
+            $result = $this->run(importer: $importer, action: (string) ($input['action'] ?? ''));
         } catch (\Throwable $e) {
             $this->admin->jsonError($e->getMessage());
         }
+
+        $this->admin->jsonSuccess($result);
     }
 
     /** @return array<string, mixed> */
