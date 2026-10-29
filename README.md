@@ -27,6 +27,8 @@ A page claim cannot redirect, so a visitor who is not logged in is shown the log
 
 A link lasts 30 minutes and works once; a code lasts 5 minutes, with 3 wrong tries. One link per minute per email, 10 requests per 15 minutes per visitor address. Ten failures lock an account for an hour. A customer who is suspended or closed is signed out on their next request, and a session expires after 2 idle hours. Link tokens are stored hashed.
 
+Both login emails (the link and the code) are in the Template test list under Settings > Email, built from made-up data and sent only to the address you type.
+
 ## Events (hooks)
 
 Trade acts only on events whose `customer.source` is the source selected in settings. A source service (or an adapter in this service) fires these with `customer` (`email`, `company_name`, `contact_name`, `phone`, `address_line_1`, `address_line_2`, `city`, `county`, `postcode`, `country`, `notes`, `source`, `source_ref`) and `dataSource`:
