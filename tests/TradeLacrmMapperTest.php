@@ -126,4 +126,11 @@ final class TradeLacrmMapperTest extends TestCase
         $this->assertArrayNotHasKey('status', $customer);
         $this->assertArrayNotHasKey('discount', $customer);
     }
+
+    public function test_a_plain_text_name_with_an_is_company_flag_is_understood(): void
+    {
+        $this->assertSame(['company_name' => 'Plain Co Ltd'], TradeLacrmMapper::changes(['IsCompany' => true, 'Name' => ' Plain Co Ltd ']));
+        $this->assertSame(['contact_name' => 'Sam Lee'], TradeLacrmMapper::changes(['IsCompany' => false, 'Name' => 'Sam Lee']));
+        $this->assertSame([], TradeLacrmMapper::changes(['Name' => 'No flag']));
+    }
 }

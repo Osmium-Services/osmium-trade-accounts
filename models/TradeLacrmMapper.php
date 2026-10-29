@@ -107,10 +107,18 @@ final class TradeLacrmMapper
         $isCompany = $name === null && $companyName !== null;
         $isPerson = \is_array($name);
 
+        // Some payloads carry a plain-text Name and an IsCompany flag instead of "Company Name" / {FirstName, LastName}
+        $plainName = \is_string($name) ? \trim($name) : '';
+        $namedCompany = $plainName !== '' && ($contact['IsCompany'] ?? null) === true;
+        $namedPerson = $plainName !== '' && ($contact['IsCompany'] ?? null) === false;
+        if ($namedCompany) $companyName = $plainName;
+        if ($namedCompany) $isCompany = true;
+
         $company = \trim((string) $companyName);
         if ($isCompany && $company !== '') $changes['company_name'] = $company;
 
         $person = $isPerson ? \trim(($name['FirstName'] ?? '') . ' ' . ($name['LastName'] ?? '')) : '';
+        if ($namedPerson) $person = $plainName;
         if ($person !== '') $changes['contact_name'] = $person;
 
         $email = \strtolower(self::firstText($contact['Email'] ?? []));
