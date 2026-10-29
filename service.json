@@ -35,6 +35,18 @@
         ],
         "pages.protected_urls": [
             "Osmium\\Services\\TradeAccounts\\Models\\TradePages::protectedUrls"
+        ],
+        "trade.application.received": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeEvents::received"
+        ],
+        "trade.customer.approved": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeEvents::approved"
+        ],
+        "trade.customer.suspended": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeEvents::suspended"
+        ],
+        "trade.customer.updated": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeEvents::updated"
         ]
     },
     "admin": {

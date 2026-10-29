@@ -10,6 +10,7 @@ use Osmium\Services\TradeAccounts\Models\TradeCustomer;
 use Osmium\Services\TradeAccounts\Models\TradeCustomerInput;
 use Osmium\Services\TradeAccounts\Models\TradeLogo;
 use Osmium\Services\TradeAccounts\Models\TradeStatus;
+use Osmium\Services\TradeAccounts\Models\TradeStatusChange;
 
 /**
  * Trade customers admin.
@@ -123,7 +124,7 @@ class TradeCustomersController extends AdminController
         $customer = $model->getById($id);
         if (!$customer) throw new \InvalidArgumentException('Customer not found');
 
-        $model->setStatus(id: $id, status: self::STATUS_ACTIONS[$action]);
+        TradeStatusChange::apply(db: $this->osmium->dataSource, model: $model, customer: $customer, to: self::STATUS_ACTIONS[$action]);
         $this->logChange(action: self::STATUS_VERBS[$action], id: $id, name: $customer['company_name']);
 
         return ['success' => true, 'id' => $id];

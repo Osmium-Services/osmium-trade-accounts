@@ -27,7 +27,7 @@ final class TradeAuthFactory
             session: $_SESSION,
             ipAddress: $ip,
             userAgent: (string) ($_SERVER['HTTP_USER_AGENT'] ?? ''),
-            codeRequired: true, // becomes a setting with the settings page
+            codeRequired: (bool) TradeConfig::get()['codeRequired'],
         );
     }
 }

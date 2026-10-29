@@ -139,6 +139,13 @@ class TradeCustomer extends Model
         $this->database->prepare(sql: $this->loadSqlFile('customer-touch-last-login.sql'), bindings: [':id' => $id])->execute();
     }
 
+    /** Links a customer who has no source yet to the source that now vouches for them; one that already has a source is left alone. */
+    public function setSource(int $id, string $source, string $sourceRef): void
+    {
+        $bindings = [':id' => $id, ':source' => $source, ':source_ref' => $sourceRef === '' ? null : $sourceRef];
+        $this->database->prepare(sql: $this->loadSqlFile('customer-set-source.sql'), bindings: $bindings)->execute();
+    }
+
     public function softDelete(int $id): void
     {
         $this->database->prepare(sql: $this->loadSqlFile('customer-soft-delete.sql'), bindings: [':id' => $id])->execute();
