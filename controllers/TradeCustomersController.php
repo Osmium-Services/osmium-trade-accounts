@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Osmium\Services\TradeAccounts\Controllers;
 
+use Osmium\Core\Library\ImageTools;
 use Osmium\Modules\Admin\Core\AdminController;
 use Osmium\Modules\Admin\Services\OsmiumAdmin;
 use Osmium\Services\TradeAccounts\Models\TradeAuthFactory;
@@ -365,44 +366,23 @@ class TradeCustomersController extends AdminController
 
         $needsResize = TradeLogo::scale(\max($size[0], $size[1])) < 1.0;
         $saved = $needsResize
-            ? $this->saveResized(logo: $logo, size: $size, path: $dir . $filename)
+            ? $this->saveResized(logo: $logo, path: $dir . $filename)
             : \move_uploaded_file(from: $logo['tmp_name'], to: $dir . $filename);
         if (!$saved) throw new \Exception('Failed to save the logo');
 
         return $filename;
     }
 
-    /** @param array{0: int, 1: int} $size Width and height of the upload */
-    private function saveResized(array $logo, array $size, string $path): bool
+    private function saveResized(array $logo, string $path): bool
     {
         $gdName = $logo['extension'] === 'jpg' ? 'jpeg' : $logo['extension']; // GD's name for the format
-        $decoder = 'imagecreatefrom' . $gdName;
         $encoder = 'image' . $gdName;
-        $unsupported = !\function_exists($decoder) || !\function_exists($encoder);
-        if ($unsupported) throw new \Exception("This server can't resize {$logo['extension']} images. Try JPG or PNG instead.");
+        $cannotEncode = !\function_exists($encoder);
+        if ($cannotEncode) throw new \Exception("This server can't resize {$logo['extension']} images. Try JPG or PNG instead.");
 
-        $source = $decoder($logo['tmp_name']);
-        if (!$source) throw new \Exception('Failed to process the logo');
-
-        $scale = TradeLogo::scale(\max($size[0], $size[1]));
-        $width = (int) \round($size[0] * $scale);
-        $height = (int) \round($size[1] * $scale);
-
-        $resized = \imagecreatetruecolor(width: $width, height: $height);
-        \imagealphablending(image: $resized, enable: false);
-        \imagesavealpha(image: $resized, enable: true);
-        \imagecopyresampled(
-            dst_image: $resized,
-            src_image: $source,
-            dst_x: 0,
-            dst_y: 0,
-            src_x: 0,
-            src_y: 0,
-            dst_width: $width,
-            dst_height: $height,
-            src_width: $size[0],
-            src_height: $size[1],
-        );
+        $tools = new ImageTools();
+        $source = $tools->load(path: $logo['tmp_name'], allowedTypes: \array_keys(TradeLogo::TYPES));
+        $resized = $tools->fit(image: $source, maxSide: TradeLogo::MAX_DIMENSION);
 
         return $encoder($resized, $path);
     }
