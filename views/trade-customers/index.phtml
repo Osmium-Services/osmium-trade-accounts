@@ -14,6 +14,11 @@ $listContext = [
         <i class="bx bx-id-card me-2 align-text-bottom"></i>Trade Customers
     </h4>
     <div class="d-flex gap-2">
+        <?php if ($admin['isAdmin'] ?? false): ?>
+        <a href="<?= $admin['basePath'] ?>settings/trade/" class="btn btn-outline-secondary">
+            <i class="bx bx-cog me-1"></i> Settings
+        </a>
+        <?php endif; ?>
         <?php if ($admin['canImport']): ?>
             <a href="<?= $admin['basePath'] ?>trade/import/" class="btn btn-outline-primary">
                 <i class="bx bx-import me-1"></i> Import from Less Annoying CRM
