@@ -156,7 +156,7 @@ $listContext = [
 <script nonce="<?= $cspNonce ?? '' ?>">
     window.TradeCustomersConfig = {
         basePath: adminBasePath,
-        customers: <?= \json_encode(\array_column(\array_merge($admin['customers'], $admin['inactiveCustomers']), null, 'id'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
+        customers: <?= \json_encode(\array_column(\array_map(static fn(array $row): array => $row + ['extra' => $admin['extraValues'][$row['id']] ?? []], \array_merge($admin['customers'], $admin['inactiveCustomers'])), null, 'id'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
     };
 </script>
 <script src="/assets/admin/js/list-view.js<?= $adminAssetVersion('/assets/admin/js/list-view.js') ?>"></script>

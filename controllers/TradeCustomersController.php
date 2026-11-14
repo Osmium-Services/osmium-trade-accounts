@@ -44,8 +44,9 @@ class TradeCustomersController extends AdminController
         $this->data['admin']['lists'] = require __DIR__ . '/../lists/trade-customers.php';
         $extras = TradeCustomerExtras::load(db: $this->osmium->dataSource, customerIds: \array_map(static fn(array $row): int => (int) $row['id'], \array_merge($active, $inactive)));
         $this->data['admin']['extraFields'] = $extras['fields'];
-        $this->data['admin']['customers'] = \array_map(fn(array $row): array => $this->formatCustomer($row) + ['extra' => $extras['values'][(int) $row['id']] ?? []], $active);
-        $this->data['admin']['inactiveCustomers'] = \array_map(fn(array $row): array => $this->formatCustomer($row) + ['extra' => $extras['values'][(int) $row['id']] ?? []], $inactive);
+        $this->data['admin']['extraValues'] = $extras['values']; // Kept out of the list rows, which hold only displayable values
+        $this->data['admin']['customers'] = \array_map($this->formatCustomer(...), $active);
+        $this->data['admin']['inactiveCustomers'] = \array_map($this->formatCustomer(...), $inactive);
         $this->data['admin']['recentCustomers'] = \array_map($this->formatRecent(...), $model->listRecent());
         $this->data['admin']['deletedCustomers'] = \array_map($this->formatDeleted(...), $model->listDeleted());
 
