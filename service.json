@@ -1,7 +1,7 @@
 {
     "id": "osmium-trade-accounts",
     "name": "Trade Accounts",
-    "version": "0.8.2",
+    "version": "0.9.0",
     "description": "B2B trade customer accounts: a status workflow, admin, and passwordless login. Customers come from your own admin or from a chosen source such as a CRM, through neutral hooks. Needs no shop and no CRM",
     "category": "business",
     "author": {
@@ -48,26 +48,20 @@
         "trade.customer.updated": [
             "Osmium\\Services\\TradeAccounts\\Models\\TradeEvents::updated"
         ],
-        "trade.sources": [
-            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::source"
-        ],
-        "lacrm.form.submitted": [
-            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::formSubmitted"
-        ],
-        "lacrm.sale.won": [
-            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::saleWon"
-        ],
-        "lacrm.sale.lost": [
-            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::saleLost"
-        ],
-        "lacrm.contact.updated": [
-            "Osmium\\Services\\TradeAccounts\\Models\\TradeLacrmHooks::contactUpdated"
-        ],
         "email.samples": [
             "Osmium\\Services\\TradeAccounts\\Models\\TradeEmailSamples::samples"
         ],
         "trade.customer.current": [
             "Osmium\\Services\\TradeAccounts\\Models\\TradeCurrentCustomer::get"
+        ],
+        "trade.customer.lookup": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeCustomerLookup::lookup"
+        ],
+        "trade.source.selected": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeCustomerLookup::selectedSource"
+        ],
+        "trade.customer.check": [
+            "Osmium\\Services\\TradeAccounts\\Models\\TradeCustomerLookup::check"
         ]
     },
     "admin": {
@@ -112,17 +106,6 @@
                 "class": "Osmium\\Services\\TradeAccounts\\Controllers\\TradeSettingsController",
                 "method": "index",
                 "title": "Trade Accounts Settings"
-            },
-            "admin/trade/import": {
-                "controller": "controllers/TradeImportController.php",
-                "class": "Osmium\\Services\\TradeAccounts\\Controllers\\TradeImportController",
-                "method": "index",
-                "title": "Import Customers"
-            },
-            "admin/trade/import/action": {
-                "controller": "controllers/TradeImportController.php",
-                "class": "Osmium\\Services\\TradeAccounts\\Controllers\\TradeImportController",
-                "method": "action"
             }
         }
     },

@@ -21,7 +21,7 @@ final class TradeSourcesTest extends TestCase
     {
         $options = TradeSources::options([['id' => 'lacrm', 'label' => 'Less Annoying CRM', 'ready' => true, 'settingsRoute' => 'admin/settings/lacrm']]);
 
-        $this->assertSame(['lacrm' => ['id' => 'lacrm', 'label' => 'Less Annoying CRM', 'ready' => true, 'settingsRoute' => 'admin/settings/lacrm', 'available' => true]], $options);
+        $this->assertSame(['lacrm' => ['id' => 'lacrm', 'label' => 'Less Annoying CRM', 'ready' => true, 'settingsRoute' => 'admin/settings/lacrm', 'importRoute' => null, 'available' => true]], $options);
     }
 
     public function test_descriptors_with_a_bad_id_or_no_label_are_dropped(): void
@@ -61,5 +61,27 @@ final class TradeSourcesTest extends TestCase
 
         $this->assertCount(1, $options);
         $this->assertTrue($options['a']['available']);
+    }
+
+    public function test_an_import_route_is_kept_and_turned_into_the_customers_page_button(): void
+    {
+        $options = TradeSources::options([['id' => 'crm', 'label' => 'Some CRM', 'ready' => true, 'importRoute' => 'admin/trade/crm-import']]);
+
+        $this->assertSame('admin/trade/crm-import', $options['crm']['importRoute']);
+        $this->assertSame(['label' => 'Import from Some CRM', 'path' => 'trade/crm-import/'], TradeSources::importLink($options, 'crm'));
+    }
+
+    public function test_there_is_no_import_button_without_a_selected_ready_source_that_has_an_import_page(): void
+    {
+        $options = TradeSources::options([
+            ['id' => 'crm', 'label' => 'Some CRM', 'ready' => true, 'importRoute' => 'admin/trade/crm-import'],
+            ['id' => 'plain', 'label' => 'Plain', 'ready' => true],
+            ['id' => 'waiting', 'label' => 'Waiting', 'ready' => false, 'importRoute' => 'admin/trade/waiting-import'],
+        ], saved: 'gone');
+
+        $this->assertNull(TradeSources::importLink($options, ''), 'added by hand');
+        $this->assertNull(TradeSources::importLink($options, 'plain'), 'no import page');
+        $this->assertNull(TradeSources::importLink($options, 'waiting'), 'not ready');
+        $this->assertNull(TradeSources::importLink($options, 'gone'), 'selected source no longer installed');
     }
 }

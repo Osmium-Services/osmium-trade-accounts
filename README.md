@@ -8,7 +8,7 @@ Pricing, orders, invoices and downloads are not here. They belong to a later Tra
 
 - **Customers** in Admin > Trade Customers: add, edit, status (pending, active, suspended, closed), a Logo per customer, delete and restore, and a bin. An admin can use *Log in as customer* on an active customer to see their account.
 - **Login** for customers at `/trade/login`: they enter their email, get a link, press Continue, then enter a 6-digit code (turn the code off under Settings > Trade Accounts). Only active customers can log in; the same screen is shown for an unknown email, so addresses cannot be probed.
-- **Customer source** under Settings > Trade Accounts: *None* (you add and approve customers yourself) or any installed source. Today the only source is Less Annoying CRM, whose adapter lives inside this service, so the LACRM service stays a plain connection.
+- **Customer source** under Settings > Trade Accounts: *None* (you add and approve customers yourself) or any installed source, such as the Trade LACRM Sync service. The customer table is the one source of truth: everything else in the trade area (login, orders, documents) works from it and never from a CRM.
 
 ## Pages and theme views
 
@@ -44,7 +44,15 @@ Customers are found by source and `source_ref`, else by email. Events that write
 
 Trade answers `trade.customer.current` (`handle`; payload `osmium`): the logged-in trade customer as `id`, `company_name`, `contact_name` and `status`, or null when nobody is logged in (or the customer has since been suspended or closed). It lets another service, such as Trade Ordering or Trade Downloads, serve trade customers only without calling this service's code, and it shares no contact details.
 
-Trade announces `trade.customer.status_changed` (`customerId`, `from`, `to`, `dataSource`) whenever a status changes, and collects `trade.sources` answers (`id`, `label`, `ready`, `settingsRoute`) to fill the source setting.
+Trade announces `trade.customer.status_changed` (`customerId`, `from`, `to`, `dataSource`) whenever a status changes, and collects `trade.sources` answers (`id`, `label`, `ready`, `settingsRoute`, and optionally `importRoute`, the admin route of the source's own import page, which becomes the customers page's *Import from ...* button) to fill the source setting.
+
+So a source service never needs Trade's PHP, Trade answers three questions (`handle`; each payload carries `dataSource`):
+
+| Hook | Payload | Answer |
+|---|---|---|
+| `trade.customer.lookup` | `source` and `sourceRef` (the source's own id for the customer), or `email` | `id`, `status`, `company_name`, `email`, `source`, `source_ref` of the live customer, or null |
+| `trade.source.selected` | none | the source id chosen in settings, or an empty string when customers are added by hand |
+| `trade.customer.check` | `customer` (as an event carries it) | `valid` and `problem`: whether the details pass the same rules as the admin form and the events |
 
 ## Extra customer fields
 
@@ -58,20 +66,13 @@ Another service can add its own fields to the customer edit form and keep the va
 
 A listener that throws is logged and skipped, so a broken validator lets the save through.
 
-## Less Annoying CRM adapter
+## Customer sources
 
-Needs the **Less Annoying CRM** service. With it chosen as the source:
-
-- a form submission becomes a pending application;
-- a sale at the Won status approves the contact as an active customer; a sale at the Lost status suspends them;
-- a contact update changes the details of a contact who is already a customer;
-- *Import from Less Annoying CRM* on the customers page creates a customer for everyone at the Won status. It leaves existing customers alone and can be run again.
-
-How LACRM fields map to customer columns (form labels such as `company name`, `main company phone`, `delivery address (if different to the above)`) was written for one site's form and is in `models/TradeLacrmMapper.php`. Check it against your own form. Trade names LACRM's hooks but never calls its code, and works with it not installed.
+Trade Accounts holds no CRM code. A source is a separate service that fires the four events above and answers `trade.sources`. For Less Annoying CRM that is **Trade LACRM Sync** (`osmium-trade-lacrm`), which also adds the import page. A new source, such as HubSpot, is another service of the same shape.
 
 ## Not covered yet
 
-Trade Ordering (prices, orders, invoices, documents) and other sources such as HubSpot. A new source needs only to answer `trade.sources` and fire the events above, or be added as an adapter here.
+Trade Ordering (prices, orders, invoices, documents) and other sources such as HubSpot. A new source needs only to answer `trade.sources` and fire the events above, as its own service.
 
 ## Tests
 

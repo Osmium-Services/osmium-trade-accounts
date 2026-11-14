@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace Osmium\Services\TradeAccounts\Controllers;
 
 use Osmium\Core\Library\ImageTools;
+use Osmium\Core\Library\ServiceHooks;
+use Osmium\Core\Library\ServiceLoader;
+use Osmium\Core\Models\ServiceModel;
 use Osmium\Modules\Admin\Core\AdminController;
 use Osmium\Modules\Admin\Services\OsmiumAdmin;
 use Osmium\Services\TradeAccounts\Models\TradeAuthFactory;
 use Osmium\Services\TradeAccounts\Models\TradeCustomer;
+use Osmium\Services\TradeAccounts\Models\TradeConfig;
 use Osmium\Services\TradeAccounts\Models\TradeCustomerExtras;
 use Osmium\Services\TradeAccounts\Models\TradeCustomerInput;
-use Osmium\Services\TradeAccounts\Models\TradeLacrmHooks;
 use Osmium\Services\TradeAccounts\Models\TradeLogo;
+use Osmium\Services\TradeAccounts\Models\TradeSources;
 use Osmium\Services\TradeAccounts\Models\TradeStatus;
 use Osmium\Services\TradeAccounts\Models\TradeStatusChange;
 
@@ -36,7 +40,7 @@ class TradeCustomersController extends AdminController
         $inactive = $model->listByStatus([TradeStatus::SUSPENDED, TradeStatus::CLOSED]);
 
         $this->data['admin']['isAdmin'] = $this->isAdmin();
-        $this->data['admin']['canImport'] = $this->isAdmin() && TradeLacrmHooks::importer($this->osmium->dataSource) !== null;
+        $this->data['admin']['importLink'] = $this->isAdmin() ? $this->importLink() : null;
         $this->data['admin']['lists'] = require __DIR__ . '/../lists/trade-customers.php';
         $extras = TradeCustomerExtras::load(db: $this->osmium->dataSource, customerIds: \array_map(static fn(array $row): int => (int) $row['id'], \array_merge($active, $inactive)));
         $this->data['admin']['extraFields'] = $extras['fields'];
@@ -74,6 +78,16 @@ class TradeCustomersController extends AdminController
     }
 
     /** @return array<string, mixed> */
+    /** @return array{label: string, path: string}|null the selected source's own import page, when it has one */
+    private function importLink(): ?array
+    {
+        $selected = (string) TradeConfig::get()['source'];
+        $hooks = new ServiceHooks(new ServiceLoader(new ServiceModel($this->osmium->dataSource)));
+        $answers = $hooks->collectAll('trade.sources', ['osmium' => $this->osmium, 'dataSource' => $this->osmium->dataSource]);
+
+        return TradeSources::importLink(options: TradeSources::options(answers: $answers, saved: $selected), selected: $selected);
+    }
+
     private function run(string $action, int $id, array $input): array
     {
         $isStatusChange = isset(self::STATUS_ACTIONS[$action]);
