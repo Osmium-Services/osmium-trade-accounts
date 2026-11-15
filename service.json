@@ -1,7 +1,7 @@
 {
     "id": "osmium-trade-accounts",
     "name": "Trade Accounts",
-    "version": "0.9.1",
+    "version": "0.9.2",
     "description": "B2B trade customer accounts: a status workflow, admin, and passwordless login. Customers come from your own admin or from a chosen source such as a CRM, through neutral hooks. Needs no shop and no CRM",
     "category": "business",
     "author": {
@@ -84,7 +84,7 @@
                     "label": "Trade Accounts",
                     "icon": "bx bx-id-card",
                     "route": "admin/settings/trade",
-                    "activePattern": "admin/settings/trade*",
+                    "activePattern": "admin/settings/trade",
                     "role": "admin"
                 }
             ]
