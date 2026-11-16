@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Osmium\Services\TradeAccounts\Models;
 
+use Osmium\Core\Library\ServiceHooks;
+use Osmium\Core\Library\ServiceLoader;
+use Osmium\Core\Models\ServiceModel;
+
 /**
  * Answers core's `page.claim` hook for the four Trade Accounts pages. The theme supplies the views (it names them
  * relative to the site's module path); the claim hands over the data. A claim cannot redirect, so a visitor who is
@@ -12,7 +16,7 @@ namespace Osmium\Services\TradeAccounts\Models;
  *
  * Views and their data. Every form needs a hidden field named token holding the site's usual $template['formToken'] (the other public forms use the same field):
  *   trade/views/login.phtml    $tradeLogin: action, field email, honeypot (hidden field name, must stay empty), error,
- *                              sent (true after a request), email
+ *                              sent (true after a request), email, protection (bot-protection widget HTML to echo inside the form, empty when none is installed)
  *   trade/views/verify.phtml   $tradeVerify: action, token (post it in a hidden field named t), tokenOk (false when the address has no usable token)
  *   trade/views/code.phtml     $tradeCode: action, email, error, notice; field code; a second form posts type=resend to the same action
  *   trade/views/account.phtml  $tradeAccount: customer (the row), logoutAction
@@ -46,18 +50,23 @@ final class TradeClaim
         $pending = $isCode ? $auth->codePendingCustomer() : null;
         if ($pending !== null) return self::code(pending: $pending, flash: $flash, slash: $slash);
 
-        return self::login(flash: $flash, slash: $slash);
+        return self::login(osmium: $osmium, flash: $flash, slash: $slash);
     }
 
     /** @return array{view: string, data: array<string, mixed>} */
-    private static function login(array $flash, string $slash): array
+    private static function login(object $osmium, array $flash, string $slash): array
     {
+        // Any installed bot protection supplies its widget; Trade never names one
+        $hooks = new ServiceHooks(new ServiceLoader(new ServiceModel($osmium->dataSource)));
+        $widgets = $hooks->collect('form.widget', ['form' => 'trade-login']);
+
         return ['view' => 'trade/views/login.phtml', 'data' => ['tradeLogin' => [
             'action' => '/api/trade-login' . $slash,
             'honeypot' => self::HONEYPOT,
             'error' => $flash['error'] ?? null,
             'sent' => !empty($flash['sent']),
             'email' => (string) ($flash['email'] ?? ''),
+            'protection' => \implode('', \array_filter($widgets, 'is_string')),
         ]]];
     }
 

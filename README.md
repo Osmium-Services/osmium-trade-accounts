@@ -16,7 +16,7 @@ The service creates four pages (`trade`, `trade/login`, `trade/verify`, `trade/c
 
 | View | Data | Notes |
 |---|---|---|
-| `login.phtml` | `$tradeLogin`: `action`, `honeypot`, `error`, `sent`, `email` | Field `email`. The honeypot is a hidden field that must stay empty |
+| `login.phtml` | `$tradeLogin`: `action`, `honeypot`, `error`, `sent`, `email`, `protection` | Field `email`. The honeypot is a hidden field that must stay empty. Echo `protection` inside the form: it is any installed bot-protection widget, empty when none |
 | `verify.phtml` | `$tradeVerify`: `action`, `token`, `tokenOk` | Post the token in a hidden field `t`. This Continue page exists so an email scanner opening the link cannot use it up |
 | `code.phtml` | `$tradeCode`: `action`, `email`, `error`, `notice` | Field `code`. A second form posts `type=resend` to the same action |
 | `account.phtml` | `$tradeAccount`: `customer`, `logoutAction` | The logged-in view. `customer` is the customer row |
