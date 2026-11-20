@@ -25,6 +25,8 @@ use Osmium\Services\TradeAccounts\Models\TradeStatusChange;
  *
  * Routes:
  *   - index()  → /admin/trade/customers/
+ *   - add()    → /admin/trade/customers/add/
+ *   - edit()   → /admin/trade/customers/edit/?id=
  *   - action() → /admin/trade/customers/action/   (AJAX CRUD and status changes)
  */
 class TradeCustomersController extends AdminController
@@ -42,15 +44,54 @@ class TradeCustomersController extends AdminController
         $this->data['admin']['isAdmin'] = $this->isAdmin();
         $this->data['admin']['importLink'] = $this->isAdmin() ? $this->importLink() : null;
         $this->data['admin']['lists'] = require __DIR__ . '/../lists/trade-customers.php';
-        $extras = TradeCustomerExtras::load(db: $this->osmium->dataSource, customerIds: \array_map(static fn(array $row): int => (int) $row['id'], \array_merge($active, $inactive)));
-        $this->data['admin']['extraFields'] = $extras['fields'];
-        $this->data['admin']['extraValues'] = $extras['values']; // Kept out of the list rows, which hold only displayable values
         $this->data['admin']['customers'] = \array_map($this->formatCustomer(...), $active);
         $this->data['admin']['inactiveCustomers'] = \array_map($this->formatCustomer(...), $inactive);
         $this->data['admin']['recentCustomers'] = \array_map($this->formatRecent(...), $model->listRecent());
         $this->data['admin']['deletedCustomers'] = \array_map($this->formatDeleted(...), $model->listDeleted());
 
         $this->setView('trade-customers/index.phtml');
+    }
+
+    public function add(): void
+    {
+        $this->osmium->clearStashedQuerystring();
+        $this->prepareForm(customerId: 0, customer: null);
+        $this->setView('trade-customers/add.phtml');
+    }
+
+    public function edit(): void
+    {
+        $customerId = (int) $this->osmium->getStashedParam(key: 'id', default: 0);
+        $this->osmium->clearStashedQuerystring();
+
+        $row = $customerId ? (new TradeCustomer($this->osmium->dataSource))->getById($customerId) : null;
+        $notFound = !$row;
+        if ($notFound) $this->redirect('trade/customers/');
+
+        $this->prepareForm(customerId: $customerId, customer: $this->formatCustomer($row));
+        $this->setView('trade-customers/edit.phtml');
+    }
+
+    /** @param array<string, mixed>|null $customer */
+    private function prepareForm(int $customerId, ?array $customer): void
+    {
+        $extras = TradeCustomerExtras::load(db: $this->osmium->dataSource, customerIds: $customerId ? [$customerId] : []);
+
+        $this->data['admin']['customerId'] = $customerId;
+        $this->data['admin']['customer'] = $customer ?? $this->emptyCustomer();
+        $this->data['admin']['extraFields'] = $extras['fields'];
+        $this->data['admin']['extraValues'] = $extras['values'][$customerId] ?? [];
+        $this->data['admin']['pageTitle'] = $customer ? \htmlspecialchars($customer['company_name']) : 'Add Customer';
+    }
+
+    /** @return array<string, mixed> */
+    private function emptyCustomer(): array
+    {
+        return [
+            'company_name' => '', 'contact_name' => '', 'email' => '', 'email2' => '', 'phone' => '',
+            'address_line_1' => '', 'address_line_2' => '', 'city' => '', 'county' => '', 'postcode' => '',
+            'country' => 'United Kingdom', 'notes' => '', 'hasLogo' => false, 'logoUrl' => '',
+        ];
     }
 
     public function action()

@@ -1,0 +1,167 @@
+<?php
+/** The customer form, shared by add.phtml and edit.phtml. Saved by trade-customer-form.js through the action endpoint. */
+$customer = $admin['customer'];
+$isEdit = $admin['customerId'] > 0;
+$e = static fn(mixed $value): string => \htmlspecialchars((string) $value);
+$listUrl = $admin['basePath'] . 'trade/customers/';
+?>
+<div class="d-flex justify-content-between align-items-center py-3 mb-4">
+    <h4 class="mb-0">
+        <span class="text-muted fw-light"><a href="<?= $listUrl ?>">Trade Customers</a> /</span>
+        <?= $admin['pageTitle'] ?>
+    </h4>
+    <a href="<?= $listUrl ?>" class="btn btn-outline-secondary">
+        <i class="bx bx-arrow-back me-1"></i> Back to Customers
+    </a>
+</div>
+
+<div id="customerResult" class="alert alert-danger d-none"></div>
+
+<link rel="stylesheet" href="/assets/services/osmium-trade-accounts/trade-logo.css<?= $adminAssetVersion('/assets/services/osmium-trade-accounts/trade-logo.css') ?>">
+<div class="row justify-content-center"><div class="col-lg-6">
+<form id="customerForm" enctype="multipart/form-data" data-list-url="<?= $e($listUrl) ?>">
+    <input type="hidden" id="customerId" value="<?= $isEdit ? (int) $admin['customerId'] : '' ?>">
+
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Company</h5></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="customerCompany">Company <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="customerCompany" data-field="company_name" maxlength="255" required value="<?= $e($customer['company_name']) ?>">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="customerContact">Contact name (optional)</label>
+                    <input type="text" class="form-control" id="customerContact" data-field="contact_name" maxlength="255" value="<?= $e($customer['contact_name']) ?>">
+                </div>
+            </div>
+            <div>
+                <label class="form-label" for="customerNotes">Notes (optional)</label>
+                <textarea class="form-control" id="customerNotes" data-field="notes" rows="3"><?= $e($customer['notes']) ?></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Logo</h5></div>
+        <div class="card-body">
+            <div class="logo-drop-zone" id="logo-drop-zone">
+                <button type="button" class="btn btn-sm btn-icon btn-danger btn-remove-logo<?= $customer['logoUrl'] ? '' : ' d-none' ?>" title="Remove logo">
+                    <i class="bx bx-trash"></i>
+                </button>
+                <div class="logo-empty<?= $customer['logoUrl'] ? ' d-none' : '' ?>">
+                    <i class="bx bx-cloud-upload"></i>
+                    <p class="mb-1 mt-2 fw-medium">Drag &amp; drop or click to upload</p>
+                    <small class="text-muted">JPG, PNG, GIF, WebP or SVG</small>
+                </div>
+                <img src="<?= $e($customer['logoUrl']) ?>" data-original="<?= $e($customer['logoUrl']) ?>" alt="" class="logo-preview<?= $customer['logoUrl'] ? '' : ' d-none' ?>">
+            </div>
+            <input type="file" class="d-none" id="logo" accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml">
+            <input type="checkbox" class="d-none" id="remove_logo" value="1">
+            <small class="text-muted">Saved when you press Save (optional)</small>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Contact and login</h5></div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="customerEmail">Email <span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" id="customerEmail" data-field="email" maxlength="255" required value="<?= $e($customer['email']) ?>">
+                    <div class="form-text">They log in with this address.</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="customerEmail2">Second email (optional)</label>
+                    <input type="email" class="form-control" id="customerEmail2" data-field="email2" maxlength="255" value="<?= $e($customer['email2']) ?>">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="customerPhone">Phone (optional)</label>
+                    <input type="text" class="form-control" id="customerPhone" data-field="phone" maxlength="50" value="<?= $e($customer['phone']) ?>">
+                </div>
+                <?php if (!$isEdit): ?>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="customerStatus">Starting status</label>
+                    <select class="form-select" id="customerStatus" data-field="status">
+                        <option value="pending">Pending</option>
+                        <option value="active">Active</option>
+                    </select>
+                    <div class="form-text">Change it later with Activate, Suspend or Close account.</div>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">Address</h5></div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label" for="customerAddress1">Address (optional)</label>
+                <input type="text" class="form-control mb-2" id="customerAddress1" data-field="address_line_1" maxlength="255" value="<?= $e($customer['address_line_1']) ?>">
+                <input type="text" class="form-control" id="customerAddress2" data-field="address_line_2" maxlength="255" value="<?= $e($customer['address_line_2']) ?>">
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label" for="customerCity">Town / city</label>
+                    <input type="text" class="form-control" id="customerCity" data-field="city" maxlength="100" value="<?= $e($customer['city']) ?>">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label" for="customerCounty">County</label>
+                    <input type="text" class="form-control" id="customerCounty" data-field="county" maxlength="100" value="<?= $e($customer['county']) ?>">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label" for="customerPostcode">Postcode</label>
+                    <input type="text" class="form-control" id="customerPostcode" data-field="postcode" maxlength="20" value="<?= $e($customer['postcode']) ?>">
+                </div>
+            </div>
+            <div>
+                <label class="form-label" for="customerCountry">Country</label>
+                <input type="text" class="form-control" id="customerCountry" data-field="country" maxlength="100" value="<?= $e($customer['country']) ?>">
+            </div>
+        </div>
+    </div>
+
+    <?php if ($admin['extraFields'] !== []): ?>
+    <div class="card mb-4">
+        <div class="card-header"><h5 class="mb-0">More details</h5></div>
+        <div class="card-body">
+            <?php foreach ($admin['extraFields'] as $field): ?>
+                <?php
+                $id = 'customerExt_' . $field['name'];
+                $value = $admin['extraValues'][$field['name']] ?? $field['default'];
+                $attrs = 'id="' . $e($id) . '" data-ext-name="' . $e($field['name']) . '"';
+                ?>
+                <div class="mb-3">
+                    <label class="form-label" for="<?= $e($id) ?>"><?= $e($field['label']) ?></label>
+                    <?php if ($field['type'] === 'select'): ?>
+                        <select class="form-select" <?= $attrs ?>>
+                            <?php foreach ($field['options'] as $optionValue => $label): ?>
+                                <option value="<?= $e($optionValue) ?>"<?= (string) $optionValue === (string) $value ? ' selected' : '' ?>><?= $e($label) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php elseif ($field['type'] === 'textarea'): ?>
+                        <textarea class="form-control" rows="3" <?= $attrs ?>><?= $e($value) ?></textarea>
+                    <?php else: ?>
+                        <input type="<?= $field['type'] === 'number' ? 'number' : 'text' ?>" class="form-control" <?= $attrs ?> value="<?= $e($value) ?>"<?= $field['min'] !== '' ? ' min="' . $e($field['min']) . '"' : '' ?><?= $field['max'] !== '' ? ' max="' . $e($field['max']) . '"' : '' ?><?= $field['step'] !== '' ? ' step="' . $e($field['step']) . '"' : '' ?>>
+                    <?php endif; ?>
+                    <?php if ($field['help'] !== ''): ?><div class="form-text"><?= $e($field['help']) ?></div><?php endif; ?>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <div class="d-flex justify-content-end gap-2 mb-4">
+        <a href="<?= $listUrl ?>" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary" id="customerSaveButton">
+            <i class="bx bx-save me-1"></i> Save
+        </button>
+    </div>
+</form>
+</div></div>
+
+<script src="/assets/services/osmium-trade-accounts/trade-logo.js<?= $adminAssetVersion('/assets/services/osmium-trade-accounts/trade-logo.js') ?>"></script>
+<script src="/assets/services/osmium-trade-accounts/trade-customer-form.js<?= $adminAssetVersion('/assets/services/osmium-trade-accounts/trade-customer-form.js') ?>"></script>
