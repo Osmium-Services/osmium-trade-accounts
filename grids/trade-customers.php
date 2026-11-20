@@ -20,7 +20,7 @@ return [
             'small' => true,
             'render' => fn(array $row, array $context): string => '<a href="mailto:' . \htmlspecialchars((string) $row['email']) . '">' . \htmlspecialchars((string) $row['email']) . '</a>',
         ],
-        ['key' => 'phone', 'type' => 'text', 'small' => true, 'fallback' => '-'],
+        ['key' => 'phone', 'type' => 'html', 'small' => true, 'render' => fn(array $row, array $context): string => \Osmium\Services\TradeAccounts\Models\TradePhone::html((string) $row['phone'])],
     ],
     'actionsAt' => 'bottom-end',
     'actions' => [

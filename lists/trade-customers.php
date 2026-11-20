@@ -22,7 +22,7 @@ $customerColumns = [
         'small' => true,
         'render' => fn(array $row, array $context): string => '<a href="mailto:' . \htmlspecialchars((string) $row['email']) . '">' . \htmlspecialchars((string) $row['email']) . '</a>',
     ],
-    ['key' => 'phone', 'label' => 'Phone', 'type' => 'text', 'small' => true, 'nowrap' => true, 'fallback' => '-'],
+    ['key' => 'phone', 'label' => 'Phone', 'type' => 'html', 'small' => true, 'nowrap' => true, 'render' => fn(array $row, array $context): string => \Osmium\Services\TradeAccounts\Models\TradePhone::html((string) $row['phone'])],
     ['key' => 'statusLabel', 'label' => 'Status', 'type' => 'badge', 'text' => true, 'classKey' => 'statusClass', 'nowrap' => true],
 ];
 
