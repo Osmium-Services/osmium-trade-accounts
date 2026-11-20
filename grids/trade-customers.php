@@ -24,7 +24,7 @@ return [
     ],
     'actionsAt' => 'bottom-end',
     'actions' => [
-        ['label' => 'Edit', 'icon' => 'bx-edit-alt', 'event' => 'edit'],
+        ['label' => 'Edit', 'icon' => 'bx-edit-alt', 'href' => 'trade/customers/edit/?id={id}'],
         [
             'label' => 'Log in as customer',
             'icon' => 'bx-log-in-circle',
