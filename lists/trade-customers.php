@@ -14,13 +14,12 @@ $changedByColumn = ['key' => 'changed_by', 'label' => '', 'type' => 'html', 'sor
 
 $customerColumns = [
     ['key' => 'logoHtml', 'label' => '', 'type' => 'raw', 'sortable' => false, 'nowrap' => true],
-    ['key' => 'company_name', 'label' => 'Company', 'type' => 'text', 'strong' => true, 'sub' => ['key' => 'contact_name', 'style' => 'muted']],
+    ['key' => 'company_name', 'label' => 'Company', 'type' => 'text', 'strong' => true, 'fill' => true, 'sub' => ['key' => 'contact_name', 'style' => 'muted']],
     [
         'key' => 'email',
         'label' => 'Email',
         'type' => 'html',
         'small' => true,
-        'fill' => true,
         'render' => fn(array $row, array $context): string => '<a href="mailto:' . \htmlspecialchars((string) $row['email']) . '">' . \htmlspecialchars((string) $row['email']) . '</a>',
     ],
     ['key' => 'phone', 'label' => 'Phone', 'type' => 'text', 'small' => true, 'nowrap' => true, 'fallback' => '-'],
