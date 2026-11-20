@@ -439,11 +439,11 @@ class TradeCustomersController extends AdminController
     {
         $url = TradeLogo::url($filename);
         $hasLogo = $url !== '';
-        if ($hasLogo) return '<img src="' . \htmlspecialchars($url) . '" alt="" height="28" style="max-width: 80px; object-fit: contain;">';
+        if ($hasLogo) return '<div class="text-center"><img src="' . \htmlspecialchars($url) . '" alt="" height="28" style="max-width: 80px; object-fit: contain;"></div>';
 
         $initial = \htmlspecialchars(\strtoupper(\mb_substr($company, 0, 1)));
 
-        return '<span class="rounded bg-label-secondary d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.8rem;">' . $initial . '</span>';
+        return '<div class="text-center"><span class="rounded bg-label-secondary d-inline-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.8rem;">' . $initial . '</span></div>';
     }
 
     private function logChange(string $action, int $id, string $name): void
