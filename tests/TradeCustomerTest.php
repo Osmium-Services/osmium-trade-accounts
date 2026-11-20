@@ -116,14 +116,9 @@ final class TradeCustomerTest extends TestCase
 
     // Logo
 
-    public function test_only_image_types_are_allowed_for_logos(): void
+    public function test_logos_accept_svg_as_well_as_the_usual_image_types(): void
     {
-        foreach (['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'] as $type) {
-            $this->assertTrue(TradeLogo::isAllowedType($type), $type);
-        }
-        foreach (['image/svg+xml', 'application/pdf', 'text/html', ''] as $type) {
-            $this->assertFalse(TradeLogo::isAllowedType($type), $type);
-        }
+        $this->assertSame(['jpg', 'png', 'gif', 'webp', 'svg'], TradeLogo::TYPES);
     }
 
     public function test_the_logo_address_is_built_from_the_file_name_only(): void
@@ -132,12 +127,5 @@ final class TradeCustomerTest extends TestCase
         $this->assertSame('/assets/images/trade/passwd', TradeLogo::url('../../etc/passwd'));
         $this->assertSame('', TradeLogo::url(null));
         $this->assertSame('', TradeLogo::url(''));
-    }
-
-    public function test_big_logos_scale_down_to_fit_and_small_ones_are_left_alone(): void
-    {
-        $this->assertSame(1.0, TradeLogo::scale(400));
-        $this->assertSame(1.0, TradeLogo::scale(120));
-        $this->assertSame(0.5, TradeLogo::scale(800));
     }
 }

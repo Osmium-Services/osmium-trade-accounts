@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Osmium\Services\TradeAccounts\Controllers;
 
-use Osmium\Core\Library\ImageTools;
+use Osmium\Core\Library\ImageUpload;
 use Osmium\Core\Library\ServiceHooks;
 use Osmium\Core\Library\ServiceLoader;
 use Osmium\Core\Models\ServiceModel;
@@ -342,64 +342,32 @@ class TradeCustomersController extends AdminController
     /**
      * The uploaded logo checked and ready to save, or null when none was sent
      *
-     * @return array{tmp_name: string, extension: string, mimeType: string}|null
+     * @return array<string, mixed>|null
      */
     private function validateLogo(): ?array
     {
         $file = $_FILES['logo'] ?? null;
-        $noFileSent = $file === null || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE;
+        $noFileSent = !ImageUpload::wasUploaded($file);
         if ($noFileSent) return null;
 
-        $uploadFailed = $file['error'] !== UPLOAD_ERR_OK;
-        if ($uploadFailed) throw new \InvalidArgumentException('The logo did not upload');
-
-        $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
-        $typeNotAllowed = !TradeLogo::isAllowedType($mimeType);
-        if ($typeNotAllowed) throw new \InvalidArgumentException('Logo must be a JPG, PNG, GIF, WebP or AVIF image');
-
         $maxUpload = OsmiumAdmin::getMaxUploadSize();
-        $tooLarge = $file['size'] > $maxUpload['bytes'];
-        if ($tooLarge) throw new \InvalidArgumentException('Logo is too large. Maximum ' . $maxUpload['formatted']);
+        $problem = $this->logoUpload($maxUpload['bytes'])->errorFor($file);
+        if ($problem !== null) throw new \InvalidArgumentException($problem);
 
-        return ['tmp_name' => $file['tmp_name'], 'extension' => TradeLogo::TYPES[$mimeType], 'mimeType' => $mimeType];
+        return $file;
     }
 
-    /**
-     * Saves the checked upload under a new random name and returns that name. A logo with a side over
-     * TradeLogo::MAX_DIMENSION is scaled down to fit (never up); a smaller one is moved as uploaded.
-     */
+    /** Saves the checked upload under a new random name and returns that name. */
     private function saveLogo(array $logo): string
     {
-        $dir = $_SERVER['DOCUMENT_ROOT'] . TradeLogo::DIR;
-        $dirMissing = !\is_dir($dir);
-        if ($dirMissing) \mkdir(directory: $dir, permissions: 0755, recursive: true);
+        $maxUpload = OsmiumAdmin::getMaxUploadSize();
 
-        $filename = \bin2hex(\random_bytes(8)) . '.' . $logo['extension'];
-        $size = \getimagesize($logo['tmp_name']);
-        $isImage = $size !== false;
-        if (!$isImage) throw new \Exception('Failed to read the logo');
-
-        $needsResize = TradeLogo::scale(\max($size[0], $size[1])) < 1.0;
-        $saved = $needsResize
-            ? $this->saveResized(logo: $logo, path: $dir . $filename)
-            : \move_uploaded_file(from: $logo['tmp_name'], to: $dir . $filename);
-        if (!$saved) throw new \Exception('Failed to save the logo');
-
-        return $filename;
+        return $this->logoUpload($maxUpload['bytes'])->store($logo['tmp_name'], $_SERVER['DOCUMENT_ROOT'] . TradeLogo::DIR, \bin2hex(\random_bytes(8)));
     }
 
-    private function saveResized(array $logo, string $path): bool
+    private function logoUpload(int $maxBytes): ImageUpload
     {
-        $gdName = $logo['extension'] === 'jpg' ? 'jpeg' : $logo['extension']; // GD's name for the format
-        $encoder = 'image' . $gdName;
-        $cannotEncode = !\function_exists($encoder);
-        if ($cannotEncode) throw new \Exception("This server can't resize {$logo['extension']} images. Try JPG or PNG instead.");
-
-        $tools = new ImageTools();
-        $source = $tools->load(path: $logo['tmp_name'], allowedTypes: \array_keys(TradeLogo::TYPES));
-        $resized = $tools->fit(image: $source, maxSide: TradeLogo::MAX_DIMENSION);
-
-        return $encoder($resized, $path);
+        return new ImageUpload(TradeLogo::TYPES, $maxBytes);
     }
 
     /** @param array<string, mixed> $existing */
@@ -421,12 +389,7 @@ class TradeCustomersController extends AdminController
 
     private function removeLogoFile(?string $filename): void
     {
-        $hasFile = !empty($filename);
-        if (!$hasFile) return;
-
-        $path = $_SERVER['DOCUMENT_ROOT'] . TradeLogo::DIR . \basename($filename);
-        $exists = \file_exists($path);
-        if ($exists) \unlink($path);
+        ImageUpload::delete($_SERVER['DOCUMENT_ROOT'] . TradeLogo::DIR, $filename);
     }
 
     /** The logo, or the company's first letter when there is none. */
