@@ -8,6 +8,7 @@ Pricing, orders, invoices and downloads are not here. They belong to a later Tra
 
 - **Customers** in Admin > Trade Customers: add, edit, status (pending, active, suspended, closed), a Logo per customer, delete and restore, and a bin. An admin can use *Log in as customer* on an active customer to see their account.
 - **Login** for customers at `/trade/login`: they enter their email, get a link, press Continue, then enter a 6-digit code (turn the code off under Settings > Trade Accounts). Only active customers can log in; the same screen is shown for an unknown email, so addresses cannot be probed.
+- **Spreadsheet import** from a CSV or Excel (.xlsx) file, with no CRM needed (see below).
 - **Customer source** under Settings > Trade Accounts: *None* (you add and approve customers yourself) or any installed source, such as the Trade LACRM Sync service. The customer table is the one source of truth: everything else in the trade area (login, orders, documents) works from it and never from a CRM.
 
 ## Pages and theme views
@@ -66,9 +67,28 @@ Another service can add its own fields to the customer edit form and keep the va
 
 A listener that throws is logged and skipped, so a broken validator lets the save through.
 
+## Spreadsheet import
+
+With no customer source selected, the Trade Customers page shows **Import from spreadsheet**. Choosing a source that has its own import (such as Trade LACRM Sync) replaces that button with the source's own.
+
+It is a three-step wizard (File, Columns, Check) and nothing is saved until the final **Import** click:
+
+1. **File.** A `.csv` or `.xlsx` file with headings in the first row (first sheet only; up to 5,000 rows and 10 MB; split bigger files). The upload is kept in `app/cache/trade-import/` under a random name and is deleted when the wizard closes or the import finishes, and anything older than 30 minutes is swept away.
+2. **Columns.** Each customer field is matched to a column of the file. Headings are guessed. Company name and email must be matched, and a column can be used once. A single *Full address* column goes whole into address line 1, with a UK postcode at the end moved to the postcode field and a non-UK country name at the end (from the `intl` extension's country list) moved to the country field.
+3. **Check.** A sample of the rows as they will be saved, with a count and an Active or Pending choice.
+
+No customer is dropped for being incomplete or odd:
+
+- A missing company name uses the contact name, or "Unknown company".
+- A missing or unusable email, or one already used by a different customer, gets a placeholder `no-email-<hash>@placeholder.invalid`, and the notes record the original. Phone number is the lead for sorting it out afterwards.
+- A bad second email is left out; a value longer than its field is cut and its full text goes in the notes; a bare 10-digit number loses its leading 0 in Excel, so the 0 is put back.
+- A row is skipped only as a true duplicate: the same email and the same phone, or the same email and the same company, as an existing customer or an earlier row. So importing a file twice adds nothing the second time.
+
+Every default shows as a badge on the row in the Check step, with the reason on hover. The routes are `admin/trade/customers/import` and `admin/trade/customers/import/action`. Nothing here is specific to any CRM.
+
 ## Customer sources
 
-Trade Accounts holds no CRM code. A source is a separate service that fires the four events above and answers `trade.sources`. For Less Annoying CRM that is **Trade LACRM Sync** (`osmium-trade-lacrm`), which also adds the import page. A new source, such as HubSpot, is another service of the same shape.
+Trade Accounts holds no CRM code. A source is a separate service that fires the four events above and answers `trade.sources` (with an optional `importRoute`, the admin route of its own import page, which replaces the spreadsheet import button). For Less Annoying CRM that is **Trade LACRM Sync** (`osmium-trade-lacrm`), which also adds the import page. A new source, such as HubSpot, is another service of the same shape.
 
 ## Not covered yet
 

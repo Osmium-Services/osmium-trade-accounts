@@ -15,6 +15,12 @@ final class TradeCustomerInput
     private const MAX = ['email' => 255, 'email2' => 255, 'company_name' => 255, 'contact_name' => 255, 'phone' => 50,
         'address_line_1' => 255, 'address_line_2' => 255, 'city' => 100, 'county' => 100, 'postcode' => 20, 'country' => 100];
 
+    /** @return array<string, int> the longest each text field may be */
+    public static function limits(): array
+    {
+        return self::MAX;
+    }
+
     /**
      * @param array<string, mixed> $input
      * @return array<string, mixed> every customer column an admin or source may set

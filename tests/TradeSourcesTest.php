@@ -79,9 +79,15 @@ final class TradeSourcesTest extends TestCase
             ['id' => 'waiting', 'label' => 'Waiting', 'ready' => false, 'importRoute' => 'admin/trade/waiting-import'],
         ], saved: 'gone');
 
-        $this->assertNull(TradeSources::importLink($options, ''), 'added by hand');
         $this->assertNull(TradeSources::importLink($options, 'plain'), 'no import page');
         $this->assertNull(TradeSources::importLink($options, 'waiting'), 'not ready');
         $this->assertNull(TradeSources::importLink($options, 'gone'), 'selected source no longer installed');
+    }
+
+    public function test_with_no_source_selected_the_button_is_the_spreadsheet_import(): void
+    {
+        $options = TradeSources::options([['id' => 'crm', 'label' => 'Some CRM', 'ready' => true, 'importRoute' => 'admin/trade/crm-import']]);
+
+        $this->assertSame(['label' => 'Import from spreadsheet', 'path' => 'trade/customers/import/'], TradeSources::importLink($options, ''));
     }
 }

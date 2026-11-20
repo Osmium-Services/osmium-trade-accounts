@@ -1,0 +1,133 @@
+<link rel="stylesheet" href="/assets/services/osmium-trade-accounts/trade-import.css<?= $adminAssetVersion('/assets/services/osmium-trade-accounts/trade-import.css') ?>">
+
+<div class="d-flex justify-content-between align-items-center py-3 mb-4">
+    <h4 class="mb-0">
+        <span class="text-muted fw-light"><a href="<?= $admin['basePath'] ?>trade/customers/">Trade Customers</a> /</span> Import from spreadsheet
+    </h4>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body text-center py-5" id="import-landing">
+                <i class="bx bx-spreadsheet text-primary mb-3" style="font-size: 4rem;"></i>
+                <h4 class="mb-3">Import customers from a spreadsheet</h4>
+                <p class="text-muted mb-4">
+                    Upload a CSV or Excel (.xlsx) file, for example an export from your old system. You choose which column is which,
+                    and check a sample before anything is added. Customers who already exist are left alone, so it is safe to run again, and no customer is dropped for missing details: a default is filled in and noted.
+                </p>
+                <button type="button" class="btn btn-primary btn-lg" id="start-wizard">
+                    <i class="bx bx-upload me-2"></i> Start Import
+                </button>
+            </div>
+            <div class="card-body text-center py-5 d-none" id="import-done">
+                <i class="bx bx-check-circle text-success mb-3" style="font-size: 4rem;"></i>
+                <h4 class="mb-3">Import complete</h4>
+                <p class="mb-4" id="import-done-text"></p>
+                <a href="<?= $admin['basePath'] ?>trade/customers/" class="btn btn-primary">
+                    <i class="bx bx-id-card me-1"></i> Go to Trade Customers
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wizard Modal -->
+<div class="modal fade" id="wizardModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <div class="w-100">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="wizard-steps d-flex align-items-center">
+                            <div class="wizard-step active" data-step="1">
+                                <span class="step-number">1</span>
+                                <span class="step-label">File</span>
+                            </div>
+                            <div class="wizard-connector"></div>
+                            <div class="wizard-step" data-step="2">
+                                <span class="step-number">2</span>
+                                <span class="step-label">Columns</span>
+                            </div>
+                            <div class="wizard-connector"></div>
+                            <div class="wizard-step" data-step="3">
+                                <span class="step-number">3</span>
+                                <span class="step-label">Check</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close position-absolute" style="top: 1rem; right: 1rem;" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body pt-2">
+                <div class="alert alert-danger d-none" id="wizard-error"></div>
+
+                <!-- Step 1: File -->
+                <div class="wizard-pane active" data-step="1">
+                    <h5 class="text-center mb-4">Choose your file</h5>
+                    <div class="mb-3">
+                        <input type="file" class="form-control form-control-lg" id="import-file" accept=".csv,.xlsx">
+                        <div class="form-text">
+                            CSV or Excel (.xlsx), up to <?= \number_format($admin['importConfig']['maxRows']) ?> customers, with the column headings in the first row.
+                            Only the first sheet of an Excel file is read.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Columns -->
+                <div class="wizard-pane" data-step="2">
+                    <h5 class="text-center mb-1">Which column is which?</h5>
+                    <p class="text-center text-muted mb-4" id="import-file-summary"></p>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr><th>Customer field</th><th>Column in your file</th><th>First rows of that column</th></tr>
+                            </thead>
+                            <tbody id="import-map-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Step 3: Check -->
+                <div class="wizard-pane" data-step="3">
+                    <h5 class="text-center mb-1">Check the customers</h5>
+                    <p class="text-center text-muted mb-3" id="import-summary"></p>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr><th>Row</th><th>Company</th><th>Contact</th><th>Email</th><th>Phone</th><th>Address</th><th>Postcode</th><th></th></tr>
+                            </thead>
+                            <tbody id="import-preview-body"></tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0" id="import-more"></p>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <div class="me-auto align-items-center gap-2" id="import-status-choice" style="display: none;">
+                    <span class="text-muted small">Add as</span>
+                    <div class="btn-group" role="group" aria-label="Add customers as">
+                        <input type="radio" class="btn-check" name="import_status" id="status-active" value="active" checked>
+                        <label class="btn btn-outline-primary" for="status-active">Active</label>
+                        <input type="radio" class="btn-check" name="import_status" id="status-pending" value="pending">
+                        <label class="btn btn-outline-primary" for="status-pending">Pending</label>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-secondary" id="wizard-back" style="display: none;">
+                    <i class="bx bx-arrow-back me-1"></i> Back
+                </button>
+                <button type="button" class="btn btn-primary" id="wizard-next">
+                    Next <i class="bx bx-arrow-back bx-rotate-180 ms-1"></i>
+                </button>
+                <button type="button" class="btn btn-success" id="wizard-submit" style="display: none;">
+                    <i class="bx bx-import me-1"></i> <span id="wizard-submit-label">Import</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script nonce="<?= $cspNonce ?? '' ?>">window.TradeImportConfig = <?= \json_encode($admin['importConfig'] + ['basePath' => $admin['basePath']], JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
+<script src="/assets/services/osmium-trade-accounts/trade-import.js<?= $adminAssetVersion('/assets/services/osmium-trade-accounts/trade-import.js') ?>"></script>

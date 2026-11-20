@@ -57,12 +57,17 @@ final class TradeSources
 
     /**
      * The customers page's import button: the selected source's own import page, when it is installed, ready and has one.
+     * With no source selected (customers added by hand) it is this service's own spreadsheet import, so another source's
+     * import replaces it by being selected.
      *
      * @param array<string, array{id: string, label: string, ready: bool, settingsRoute: ?string, importRoute: ?string, available: bool}> $options as options() gives them
      * @return array{label: string, path: string}|null path is relative to the admin base, with a trailing slash
      */
     public static function importLink(array $options, string $selected): ?array
     {
+        $byHand = $selected === '';
+        if ($byHand) return ['label' => 'Import from spreadsheet', 'path' => 'trade/customers/import/'];
+
         $option = $options[$selected] ?? null;
         $none = $option === null || !$option['available'] || !$option['ready'] || $option['importRoute'] === null;
         if ($none) return null;
