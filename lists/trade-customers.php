@@ -75,6 +75,7 @@ return [
         'order' => [0, 'asc'],
         'columns' => $customerColumns,
         'actions' => $customerActions,
+        'grid' => require __DIR__ . '/../grids/trade-customers.php',
     ],
 
     'inactive' => [

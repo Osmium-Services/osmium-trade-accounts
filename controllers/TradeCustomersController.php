@@ -298,6 +298,7 @@ class TradeCustomersController extends AdminController
             'country' => (string) $row['country'],
             'notes' => (string) ($row['notes'] ?? ''),
             'hasLogo' => !empty($row['logo_filename']),
+            'logoUrl' => TradeLogo::url($row['logo_filename'] ?? null),
             'logoHtml' => $this->logoHtml(filename: $row['logo_filename'] ?? null, company: (string) $row['company_name']),
         ];
     }
