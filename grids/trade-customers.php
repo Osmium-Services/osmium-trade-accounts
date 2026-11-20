@@ -18,7 +18,7 @@ return [
             'key' => 'email',
             'type' => 'html',
             'small' => true,
-            'render' => fn(array $row, array $context): string => '<a href="mailto:' . \htmlspecialchars((string) $row['email']) . '">' . \htmlspecialchars((string) $row['email']) . '</a>',
+            'render' => fn(array $row, array $context): string => '<a href="mailto:' . \htmlspecialchars((string) $row['email']) . '" title="Email customer">' . \htmlspecialchars((string) $row['email']) . '</a>',
         ],
         ['key' => 'phone', 'type' => 'html', 'small' => true, 'render' => fn(array $row, array $context): string => \Osmium\Services\TradeAccounts\Models\TradePhone::html((string) $row['phone'])],
     ],

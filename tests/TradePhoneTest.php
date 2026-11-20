@@ -32,7 +32,7 @@ final class TradePhoneTest extends TestCase
 
     public function test_html_links_a_valid_number_and_escapes_the_rest(): void
     {
-        $this->assertSame('<a href="tel:01283733211">01283 733211</a>', TradePhone::html('01283 733211'));
+        $this->assertSame('<a href="tel:01283733211" title="Call customer">01283 733211</a>', TradePhone::html('01283 733211'));
         $this->assertSame('call &lt;b&gt;', TradePhone::html('call <b>'));
         $this->assertSame('-', TradePhone::html(''));
     }

@@ -29,7 +29,7 @@ final class TradePhone
         $shown = \htmlspecialchars($phone);
         $number = self::dialable($phone);
         $hasNumber = $number !== null;
-        if ($hasNumber) return '<a href="tel:' . \htmlspecialchars($number) . '">' . $shown . '</a>';
+        if ($hasNumber) return '<a href="tel:' . \htmlspecialchars($number) . '" title="Call customer">' . $shown . '</a>';
 
         return $phone === '' ? '-' : $shown;
     }
