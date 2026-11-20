@@ -7,6 +7,7 @@ namespace Tests\Services\TradeAccounts;
 use Osmium\Services\TradeAccounts\Models\TradePhone;
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/../../../core/library/Validator.php';
 require_once __DIR__ . '/../models/TradePhone.php';
 
 final class TradePhoneTest extends TestCase
@@ -17,6 +18,7 @@ final class TradePhoneTest extends TestCase
         $this->assertSame('07792588696', TradePhone::dialable('07792-588-696'));
         $this->assertSame('+441283733211', TradePhone::dialable('+44 (0)1283 733211'));
         $this->assertSame('+441283733211', TradePhone::dialable('+44 1283 733211'));
+        $this->assertSame('+447792588696', TradePhone::dialable('0044 7792 588696'));
     }
 
     public function test_text_or_too_short_or_too_long_is_not_dialable(): void
@@ -24,7 +26,7 @@ final class TradePhoneTest extends TestCase
         $this->assertNull(TradePhone::dialable(''));
         $this->assertNull(TradePhone::dialable('call after 5'));
         $this->assertNull(TradePhone::dialable('12345'));
-        $this->assertNull(TradePhone::dialable('0123456789012345678'));
+        $this->assertNull(TradePhone::dialable('0800 123 4567')); // not a UK landline or mobile
         $this->assertNull(TradePhone::dialable('01283 733211 ext 4'));
     }
 

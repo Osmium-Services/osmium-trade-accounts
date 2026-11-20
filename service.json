@@ -1,7 +1,7 @@
 {
     "id": "osmium-trade-accounts",
     "name": "Trade Accounts",
-    "version": "0.10.4",
+    "version": "0.10.5",
     "description": "B2B trade customer accounts: a status workflow, admin, and passwordless login. Customers come from your own admin or from a chosen source such as a CRM, through neutral hooks. Needs no shop and no CRM",
     "category": "business",
     "author": {
@@ -9,7 +9,7 @@
     },
     "license": "proprietary",
     "requires": {
-        "osmium": ">=1.0.0",
+        "osmium": ">=2.3.0",
         "php": ">=8.1",
         "services": []
     },
