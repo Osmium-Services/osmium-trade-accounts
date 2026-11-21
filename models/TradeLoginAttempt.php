@@ -44,4 +44,10 @@ class TradeLoginAttempt extends Model
 
         return (int) ($row['total'] ?? 0);
     }
+
+    /** @return array<int, array<string, mixed>> the last 7 days' attempts by outcome, most common first */
+    public function summaryByReason(): array
+    {
+        return $this->database->prepare(sql: $this->loadSqlFile('attempt-summary-by-reason.sql'), bindings: [])->resultset();
+    }
 }

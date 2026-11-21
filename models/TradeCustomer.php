@@ -171,6 +171,12 @@ class TradeCustomer extends Model
         return $statement->rowCount();
     }
 
+    /** @return array<int, array<string, mixed>> one row per status, as customer-summary.sql gives it */
+    public function summaryByStatus(): array
+    {
+        return $this->database->prepare(sql: $this->loadSqlFile('customer-summary.sql'), bindings: [])->resultset();
+    }
+
     /** @return array<int, array<string, mixed>> Created, changed or deleted in the last 24 hours, newest first, capped at 10 */
     public function listRecent(): array
     {
