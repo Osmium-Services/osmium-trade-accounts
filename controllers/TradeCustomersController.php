@@ -44,6 +44,7 @@ class TradeCustomersController extends AdminController
         $this->data['admin']['isAdmin'] = $this->isAdmin();
         $this->data['admin']['importLink'] = $this->isAdmin() ? $this->importLink() : null;
         $this->data['admin']['lists'] = require __DIR__ . '/../lists/trade-customers.php';
+        $this->data['admin']['activeEditors'] = $this->activeEditors(self::RECORD_TYPE);
         $this->data['admin']['customers'] = \array_map($this->formatCustomer(...), $active);
         $this->data['admin']['inactiveCustomers'] = \array_map($this->formatCustomer(...), $inactive);
         $this->data['admin']['recentCustomers'] = \array_map($this->formatRecent(...), $model->listRecent());
@@ -68,6 +69,7 @@ class TradeCustomersController extends AdminController
         $notFound = !$row;
         if ($notFound) $this->redirect('trade/customers/');
 
+        $this->openRecord(recordType: self::RECORD_TYPE, recordId: $customerId);
         $this->prepareForm(customerId: $customerId, customer: $this->formatCustomer($row));
         $this->setView('trade-customers/edit.phtml');
     }
@@ -104,6 +106,8 @@ class TradeCustomersController extends AdminController
         $input = $this->admin->auth->getJsonInput();
         $action = (string) ($input['action'] ?? '');
         $id = (int) ($input['id'] ?? 0);
+
+        $this->handlePresence(action: $action, input: $input, recordType: self::RECORD_TYPE);
 
         $csrfValid = $this->admin->auth->validateCsrfJson($input);
         if (!$csrfValid) $this->admin->jsonError('Invalid request token. Please refresh and try again.');

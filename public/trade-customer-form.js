@@ -33,6 +33,24 @@
         return data;
     }
 
+    // The admin's unsaved-changes warning reads window.hasUnsavedChanges. Its form tracker compares named fields and
+    // this form has none, so compare what Save would send against what the page loaded with.
+    function formValues() {
+        const values = {};
+        for (const [key, value] of buildForm().entries()) {
+            if (key === 'csrf_token') continue;
+            values[key] = value instanceof File ? value.name + ':' + value.size : value;
+        }
+        return JSON.stringify(values);
+    }
+
+    const loadedValues = formValues();
+    function trackChanges() {
+        window.hasUnsavedChanges = formValues() !== loadedValues;
+    }
+    form.addEventListener('input', trackChanges);
+    form.addEventListener('change', trackChanges);
+
     form.addEventListener('submit', async function (e) {
         e.preventDefault();
         const button = document.getElementById('customerSaveButton');
@@ -43,6 +61,7 @@
             const result = await response.json();
 
             if (result.success) {
+                window.hasUnsavedChanges = false;
                 window.location.href = form.dataset.listUrl;
                 return;
             }

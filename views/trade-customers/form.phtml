@@ -164,4 +164,7 @@ $listUrl = $admin['basePath'] . 'trade/customers/';
 </div></div>
 
 <script src="/assets/services/osmium-trade-accounts/trade-logo.js<?= $adminAssetVersion('/assets/services/osmium-trade-accounts/trade-logo.js') ?>"></script>
+<script nonce="<?= $cspNonce ?? '' ?>">
+    initPresenceTracking(adminBasePath + 'trade/customers/action/', <?= (int) $admin['customerId'] ?>, { formSelector: '#customerForm' });
+</script>
 <script src="/assets/services/osmium-trade-accounts/trade-customer-form.js<?= $adminAssetVersion('/assets/services/osmium-trade-accounts/trade-customer-form.js') ?>"></script>

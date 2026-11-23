@@ -5,7 +5,7 @@ use Osmium\Modules\Admin\Core\ListView;
 $listContext = [
     'adminUrl' => $adminUrl,
     'isAdmin' => $admin['isAdmin'],
-    'editors' => [],
+    'editors' => $admin['activeEditors'] ?? [],
     'avatarUrl' => $admin['avatarUrl'] ?? '',
 ];
 ?>
