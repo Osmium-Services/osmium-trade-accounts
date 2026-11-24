@@ -1,6 +1,7 @@
 ---
 title: Import trade customers from a spreadsheet
 tags: trade, import, csv, excel, xlsx, customers, bulk, spreadsheet
+page: admin/trade/customers/import
 ---
 
 You can add many trade customers at once from a CSV or Excel (.xlsx) file, for example an export from your old system.

@@ -1,6 +1,7 @@
 ---
 title: Add and manage trade customers
 tags: trade, b2b, trade customers, account, activate, suspend, close, login, wholesale
+page: admin/trade/customers, admin/trade/customers/add, admin/trade/customers/edit*, admin/settings/trade
 ---
 
 **Trade Accounts** gives your business customers their own accounts. They sign in with an emailed link, so there are no passwords to remember.
